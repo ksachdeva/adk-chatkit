@@ -1,0 +1,7 @@
+[tool.poe.tasks]
+fmt = "ruff format"
+
+[tool.poe.tasks.run-example-backend]
+help = "Run the Backend"
+cwd  = "examples/backend"
+cmd = "fastapi dev src/backend/main.py"

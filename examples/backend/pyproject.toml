@@ -1,0 +1,25 @@
+[project]
+name = "backend"
+version = "0.0.1"
+description = "Backend for AI agents"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "dishka>=1.6.0",
+    "fastapi[standard]>=0.116.1",
+    "fastapi-cognito>=2.9.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "google-adk>=1.16.0",    
+    "litellm>=1.76.3",
+]
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+
+[tool.mypy]
+extend = "../../pyproject.toml"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
