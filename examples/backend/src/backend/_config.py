@@ -48,4 +48,4 @@ class Settings(BaseSettings):
     gpt41_agent: AgentConfig
     gpt41_mini_agent: AgentConfig
 
-    TEMP_APP_NAME: str = "backend-temp"
+    AIRLINE_APP_NAME: str = "airline-support"

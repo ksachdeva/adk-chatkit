@@ -5,11 +5,11 @@ from google.adk.runners import Runner
 from google.adk.sessions.base_session_service import BaseSessionService
 
 from ._config import Settings
-from .agents.temp_agent import TempAgent
+from .agents.airline import AirlineSupportAgent
 
 
-def _make_temp_agent(settings: Settings) -> TempAgent:
-    return TempAgent(
+def _make_airline_support_agent(settings: Settings) -> AirlineSupportAgent:
+    return AirlineSupportAgent(
         llm=LiteLlm(
             model=settings.gpt41_mini_agent.llm.model_name,
             **settings.gpt41_mini_agent.llm.provider_args,
@@ -41,9 +41,9 @@ class RunnerManager:
         session_service: BaseSessionService,
     ) -> None:
         self._runners: dict[str, Runner] = {
-            settings.TEMP_APP_NAME: Runner(
-                app_name=settings.TEMP_APP_NAME,
-                agent=_make_temp_agent(settings),
+            settings.AIRLINE_APP_NAME: Runner(
+                app_name=settings.AIRLINE_APP_NAME,
+                agent=_make_airline_support_agent(settings),
                 session_service=session_service,
             ),
         }
