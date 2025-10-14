@@ -12,6 +12,7 @@ dependencies = [
     "pydantic-settings>=2.10.1",
     "google-adk>=1.16.0",    
     "litellm>=1.76.3",
+    "adk-chatkit",
 ]
 
 [tool.ruff]

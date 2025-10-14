@@ -5,3 +5,9 @@ fmt = "ruff format"
 help = "Run the Backend"
 cwd  = "examples/backend"
 cmd = "fastapi dev src/backend/main.py"
+
+
+[tool.poe.tasks.run-example-frontend]
+help = "Run the Frontend"
+cwd  = "examples/frontend"
+cmd = "npm run dev"

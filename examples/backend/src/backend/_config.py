@@ -48,4 +48,4 @@ class Settings(BaseSettings):
     gpt41_agent: AgentConfig
     gpt41_mini_agent: AgentConfig
 
-    AIRLINE_APP_NAME: str = "airline-support"
+    AIRLINE_APP_NAME: str = "airline"

@@ -1,21 +1,10 @@
 import asyncio
 
-from google.adk.models.lite_llm import LiteLlm
+from google.adk.agents import BaseAgent
 from google.adk.runners import Runner
 from google.adk.sessions.base_session_service import BaseSessionService
 
 from ._config import Settings
-from .agents.airline import AirlineSupportAgent
-
-
-def _make_airline_support_agent(settings: Settings) -> AirlineSupportAgent:
-    return AirlineSupportAgent(
-        llm=LiteLlm(
-            model=settings.gpt41_mini_agent.llm.model_name,
-            **settings.gpt41_mini_agent.llm.provider_args,
-        ),
-        generate_content_config=settings.gpt41_mini_agent.generate_content,
-    )
 
 
 async def _close_runners(runners: list[Runner]) -> None:
@@ -40,13 +29,23 @@ class RunnerManager:
         settings: Settings,
         session_service: BaseSessionService,
     ) -> None:
-        self._runners: dict[str, Runner] = {
-            settings.AIRLINE_APP_NAME: Runner(
-                app_name=settings.AIRLINE_APP_NAME,
-                agent=_make_airline_support_agent(settings),
-                session_service=session_service,
-            ),
-        }
+        self._runners: dict[str, Runner] = {}
+        self._settings = settings
+        self._session_service = session_service
+
+    def add_runner(self, app_name: str, agent: BaseAgent) -> Runner:
+        if app_name in self._runners:
+            raise ValueError(f"Runner for app '{app_name}' already exists")
+
+        runner = Runner(
+            app_name=app_name,
+            agent=agent,
+            session_service=self._session_service,
+        )
+
+        self._runners[app_name] = runner
+
+        return runner
 
     def get_runner(self, app_name: str) -> Runner:
         runner = self._runners.get(app_name)
