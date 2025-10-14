@@ -18,7 +18,8 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
     "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react-dom": "^19.2.0",
+    "react-router": "^7.9.4"
   },
   "devDependencies": {
     "@eslint/js": "^8.57.1",

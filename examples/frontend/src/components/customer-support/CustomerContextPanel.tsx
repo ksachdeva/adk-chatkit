@@ -2,7 +2,7 @@ import { CalendarDays, Luggage, Mail, Phone, Utensils } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import clsx from "clsx";
 
-import type { CustomerProfile, TimelineEntry } from "../hooks/useCustomerContext";
+import type { CustomerProfile, TimelineEntry } from "../../hooks/useCustomerContext";
 
 type CustomerContextPanelProps = {
   profile: CustomerProfile | null;

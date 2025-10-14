@@ -1,20 +1,27 @@
 import { useCallback, useState } from "react";
 import clsx from "clsx";
 
-import { ChatKitPanel } from "./ChatKitPanel";
-import { CustomerContextPanel } from "./CustomerContextPanel";
-import { ThemeToggle } from "./ThemeToggle";
+import { ChatKitPanel } from "../components/customer-support/ChatKitPanel";
+import { CustomerContextPanel } from "../components/customer-support/CustomerContextPanel";
+import { ThemeToggle } from "../components/ThemeToggle";
 import { useCustomerContext } from "../hooks/useCustomerContext";
 import type { ColorScheme } from "../hooks/useColorScheme";
+import { useColorScheme } from "../hooks/useColorScheme";
 
-type HomeProps = {
-  scheme: ColorScheme;
-  onThemeChange: (scheme: ColorScheme) => void;
-};
 
-export default function Home({ scheme, onThemeChange }: HomeProps) {
+
+export default function CustomerSupport() {
   const [threadId, setThreadId] = useState<string | null>(null);
   const { profile, loading, error, refresh } = useCustomerContext(threadId);
+
+  const { scheme, setScheme } = useColorScheme();
+  
+  const handleThemeChange = useCallback(
+    (value: ColorScheme) => {
+      setScheme(value);
+    },
+    [setScheme],
+  );
 
   const containerClass = clsx(
     "min-h-screen bg-gradient-to-br transition-colors duration-300",
@@ -48,7 +55,7 @@ export default function Home({ scheme, onThemeChange }: HomeProps) {
               action.
             </p>
           </div>
-          <ThemeToggle value={scheme} onChange={onThemeChange} />
+          <ThemeToggle value={scheme} onChange={handleThemeChange} />
         </header>
 
         <div className="grid flex-1 grid-cols-1 gap-8 lg:h-[calc(100vh-260px)] lg:grid-cols-[minmax(320px,380px)_1fr] lg:items-stretch xl:grid-cols-[minmax(360px,420px)_1fr]">

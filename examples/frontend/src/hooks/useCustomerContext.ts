@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { SUPPORT_CUSTOMER_URL } from "../lib/config";
+import { SUPPORT_CUSTOMER_URL } from "../lib/customer-support/config";
 
 export type FlightSegment = {
   flight_number: string;

@@ -1,11 +1,11 @@
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
-import type { ColorScheme } from "../hooks/useColorScheme";
+import type { ColorScheme } from "../../hooks/useColorScheme";
 import {
   SUPPORT_CHATKIT_API_DOMAIN_KEY,
   SUPPORT_CHATKIT_API_URL,
   SUPPORT_GREETING,
   SUPPORT_STARTER_PROMPTS,
-} from "../lib/config";
+} from "../../lib/customer-support/config";
 
 type ChatKitPanelProps = {
   theme: ColorScheme;

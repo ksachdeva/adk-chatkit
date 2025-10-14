@@ -1,19 +1,17 @@
-import { useCallback } from "react";
-
-import Home from "./components/Home";
-import type { ColorScheme } from "./hooks/useColorScheme";
-import { useColorScheme } from "./hooks/useColorScheme";
-
 export default function App() {
-  const { scheme, setScheme } = useColorScheme();
-
-  const handleThemeChange = useCallback(
-    (value: ColorScheme) => {
-      setScheme(value);
-    },
-    [setScheme],
+  return (
+    <div style={{ padding: 32, fontFamily: 'sans-serif' }}>      
+      <nav>
+        <ul>
+          <li>
+            <a href="/customer-support">Customer Support</a>
+          </li>
+          <li>
+            <a href="/marketing-assets">Marketing Assets</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
   );
-
-  return <Home scheme={scheme} onThemeChange={handleThemeChange} />;
 }
 

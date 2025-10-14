@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { THEME_STORAGE_KEY } from "../lib/config";
+import { THEME_STORAGE_KEY } from "../lib/customer-support/config";
 
 export type ColorScheme = "light" | "dark";
 

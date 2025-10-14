@@ -1,6 +1,6 @@
 import { StartScreenPrompt } from "@openai/chatkit";
 
-export const THEME_STORAGE_KEY = "customer-support-theme";
+export const THEME_STORAGE_KEY = "adk-chatkit-theme";
 
 const SUPPORT_API_BASE =
   import.meta.env.VITE_SUPPORT_API_BASE ?? "/support";
