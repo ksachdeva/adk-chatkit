@@ -2,17 +2,10 @@ from collections.abc import AsyncIterator
 from datetime import datetime
 from typing import Any
 
-from adk_chatkit import ADKContext, ADKStore
+from adk_chatkit import ADKContext, ADKStore, stream_agent_response
 from chatkit.server import ChatKitServer
 from chatkit.types import (
-    AssistantMessageContent,
-    AssistantMessageContentPartAdded,
-    AssistantMessageContentPartDone,
-    AssistantMessageContentPartTextDelta,
-    AssistantMessageItem,
     ClientToolCallItem,
-    ThreadItemAddedEvent,
-    ThreadItemUpdated,
     ThreadMetadata,
     ThreadStreamEvent,
     UserMessageItem,
@@ -132,58 +125,12 @@ class AirlineSupportChatkitServer(ChatKitServer[ADKContext]):
             parts=[genai_types.Part.from_text(text=combined_prompt)],
         )
 
-        content_index = 0
-        async for event in self._runner.run_async(
+        event_stream = self._runner.run_async(
             user_id=context["user_id"],
             session_id=thread.id,
             new_message=content,
             run_config=RunConfig(streaming_mode=StreamingMode.SSE),
-        ):
-            print("############## START EVENT ##############")
-            print(event)
+        )
 
-            if event.content is None:
-                # we need to throw item added event first
-                yield ThreadItemAddedEvent(
-                    item=AssistantMessageItem(
-                        id="__fake_id__",
-                        content=[],
-                        thread_id=thread.id,
-                        created_at=datetime.now(),
-                    )
-                )
-
-                # is it first event/message/part?
-                chatkit_event = ThreadItemUpdated(
-                    item_id="__fake_id__",
-                    update=AssistantMessageContentPartAdded(
-                        content_index=content_index,
-                        content=AssistantMessageContent(text=""),
-                    ),
-                )
-                # content_index += 1
-                yield chatkit_event
-
-            if event.content and event.content.parts and event.content.parts[0].text:
-                for p in event.content.parts:
-                    if p.text:
-                        if event.partial:
-                            chatkit_event = ThreadItemUpdated(
-                                item_id="__fake_id__",
-                                update=AssistantMessageContentPartTextDelta(
-                                    delta=p.text,
-                                    content_index=content_index,
-                                ),
-                            )
-                        else:
-                            chatkit_event = ThreadItemUpdated(
-                                item_id="__fake_id__",
-                                update=AssistantMessageContentPartDone(
-                                    content=AssistantMessageContent(text=p.text),
-                                    content_index=content_index,
-                                ),
-                            )
-                        # content_index += 1
-                        yield chatkit_event
-
-            print("############## END EVENT ##############")
+        async for event in stream_agent_response(thread, event_stream):
+            yield event
