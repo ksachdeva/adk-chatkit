@@ -5,7 +5,7 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 
 from ._config import Settings
 from ._runner_manager import RunnerManager
-from .agents.airline import AirlineSupportProcessor
+from .agents.airline import AirlineSupportChatkitServer
 
 
 class SessionServiceProvider(Provider):
@@ -23,12 +23,12 @@ def get_providers() -> list[BaseProvider]:
     runner_provider.from_context(Settings)
     runner_provider.provide(RunnerManager)
 
-    airline_support_processor_provider = Provider(scope=Scope.APP)
-    airline_support_processor_provider.from_context(Settings)
-    airline_support_processor_provider.provide(AirlineSupportProcessor)
+    airline_support_server_provider = Provider(scope=Scope.APP)
+    airline_support_server_provider.from_context(Settings)
+    airline_support_server_provider.provide(AirlineSupportChatkitServer)
 
     return [
         runner_provider,
         SessionServiceProvider(),
-        airline_support_processor_provider,
+        airline_support_server_provider,
     ]

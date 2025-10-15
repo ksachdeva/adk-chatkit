@@ -1,5 +1,5 @@
 from ._agent import AirlineSupportAgent
-from ._processor import AirlineSupportProcessor
+from ._server import AirlineSupportChatkitServer
 from ._state import AirlineAgentContext
 
-__all__ = ["AirlineSupportAgent", "AirlineAgentContext", "AirlineSupportProcessor"]
+__all__ = ["AirlineSupportAgent", "AirlineAgentContext", "AirlineSupportChatkitServer"]

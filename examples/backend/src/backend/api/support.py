@@ -1,6 +1,7 @@
 from typing import Any
 
-from adk_chatkit import ADKContext, StreamingResult
+from adk_chatkit import ADKContext
+from chatkit.server import StreamingResult
 from dishka.integrations.fastapi import (
     DishkaRoute,
     FromDishka,
@@ -13,7 +14,7 @@ from starlette.responses import JSONResponse
 
 from backend._config import Settings
 from backend._runner_manager import RunnerManager
-from backend.agents.airline import AirlineAgentContext, AirlineSupportProcessor
+from backend.agents.airline import AirlineAgentContext, AirlineSupportChatkitServer
 
 router = APIRouter(route_class=DishkaRoute)
 
@@ -23,14 +24,14 @@ async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
     runner_manager: FromDishka[RunnerManager],
-    request_processor: FromDishka[AirlineSupportProcessor],
+    request_server: FromDishka[AirlineSupportChatkitServer],
 ) -> Response:
     payload = await request.body()
     print("Received payload:", payload)
 
     user_id = "ksachdeva-1"
 
-    result = await request_processor.process(
+    result = await request_server.process(
         payload,
         ADKContext(user_id=user_id, app_name=settings.AIRLINE_APP_NAME),
     )
@@ -79,6 +80,8 @@ async def customer_snapshot(
 
     context: dict[str, Any] | None = session.state.get("context", None)
 
-    assert context is not None, "Context should be present in session state"
+    if context is None:
+        context = AirlineAgentContext.create_initial_context().model_dump()
+        session.state["context"] = context
 
     return {"customer": context["customer_profile"]}
