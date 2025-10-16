@@ -1,9 +1,10 @@
 from dishka import Provider, Scope, from_context, provide
 from dishka.provider import BaseProvider
 from google.adk.sessions.base_session_service import BaseSessionService
+from google.adk.sessions.database_session_service import DatabaseSessionService
 from google.adk.sessions.in_memory_session_service import InMemorySessionService
 
-from ._config import Settings
+from ._config import SessionStorageType, Settings
 from ._runner_manager import RunnerManager
 from .agents.airline import AirlineSupportChatkitServer
 
@@ -15,6 +16,9 @@ class SessionServiceProvider(Provider):
 
     @provide
     async def get_service(self, settings: Settings) -> BaseSessionService:
+        if settings.SESSION_STORAGE_TYPE == SessionStorageType.db:
+            return DatabaseSessionService(settings.ADK_DATABASE_URL)  # type: ignore
+
         return InMemorySessionService()  # type: ignore
 
 

@@ -1,10 +1,16 @@
 import os
+from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import AnyUrl, BeforeValidator, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .agents._config import AgentConfig
+
+
+class SessionStorageType(str, Enum):
+    memory = "memory"
+    db = "db"
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -49,3 +55,7 @@ class Settings(BaseSettings):
     gpt41_mini_agent: AgentConfig
 
     AIRLINE_APP_NAME: str = "airline"
+
+    SESSION_STORAGE_TYPE: SessionStorageType = SessionStorageType.memory
+
+    ADK_DATABASE_URL: str | None = None
