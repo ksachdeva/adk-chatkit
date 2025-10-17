@@ -1,3 +1,4 @@
+from adk_chatkit import ADKStore
 from dishka import Provider, Scope, from_context, provide
 from dishka.provider import BaseProvider
 from google.adk.sessions.base_session_service import BaseSessionService
@@ -27,6 +28,9 @@ def get_providers() -> list[BaseProvider]:
     runner_provider.from_context(Settings)
     runner_provider.provide(RunnerManager)
 
+    adk_store_provider = Provider(scope=Scope.APP)
+    adk_store_provider.provide(ADKStore)
+
     airline_support_server_provider = Provider(scope=Scope.APP)
     airline_support_server_provider.from_context(Settings)
     airline_support_server_provider.provide(AirlineSupportChatkitServer)
@@ -34,5 +38,6 @@ def get_providers() -> list[BaseProvider]:
     return [
         runner_provider,
         SessionServiceProvider(),
+        adk_store_provider,
         airline_support_server_provider,
     ]

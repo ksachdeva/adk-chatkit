@@ -4,7 +4,14 @@ from google.adk.models.lite_llm import LiteLlm
 from google.genai import types as genai_types
 
 from ._state import AirlineAgentContext
-from ._tools import add_checked_bag, cancel_trip, change_seat, request_assistance, set_meal_preference
+from ._tools import (
+    add_checked_bag,
+    cancel_trip,
+    change_seat,
+    get_customer_profile,
+    request_assistance,
+    set_meal_preference,
+)
 
 _INSTRUCTION = """
 You are a friendly and efficient airline customer support agent for OpenSkies.
@@ -19,11 +26,12 @@ special requests. Follow these guidelines:
 - Keep responses concise (2-3 sentences) unless extra detail is required.
 
 Available tools:
-- change_seat(flight_number: str, seat: str) – move the passenger to a new seat.
-- cancel_trip() – cancel the upcoming reservation and note the refund.
-- add_checked_bag() – add one checked bag to the itinerary.
-- set_meal_preference(meal: str) – update meal preference (e.g. vegetarian).
-- request_assistance(note: str) – record a special assistance request.
+- get_customer_profile() - retrieve the customer's profile and recent activity.
+- change_seat(flight_number: str, seat: str) - move the passenger to a new seat.
+- cancel_trip() - cancel the upcoming reservation and note the refund.
+- add_checked_bag() - add one checked bag to the itinerary.
+- set_meal_preference(meal: str) - update meal preference (e.g. vegetarian).
+- request_assistance(note: str) - record a special assistance request.
 
 Only use information provided in the customer context or tool results. Do not
 invent confirmation numbers or policy details.
@@ -57,6 +65,7 @@ class AirlineSupportAgent(LlmAgent):
             model=self._llm,
             instruction=_INSTRUCTION,
             tools=[
+                get_customer_profile,
                 change_seat,
                 cancel_trip,
                 add_checked_bag,

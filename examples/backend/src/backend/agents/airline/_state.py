@@ -44,6 +44,30 @@ class CustomerProfile(BaseModel):
     def log(self, entry: str, kind: str = "info") -> None:
         self.timeline.insert(0, {"timestamp": _now_iso(), "kind": kind, "entry": entry})
 
+    def format(self) -> str:
+        segments = []
+        for segment in self.segments:
+            segments.append(
+                f"- {segment.flight_number} {segment.origin}->{segment.destination}"
+                f" on {segment.date} seat {segment.seat} ({segment.status})"
+            )
+        summary = "\n".join(segments)
+        timeline = self.timeline[:3]
+        recent = "\n".join(f"  * {entry['entry']} ({entry['timestamp']})" for entry in timeline)
+        return (
+            "Customer Profile\n"
+            f"Name: {self.name} ({self.loyalty_status})\n"
+            f"Loyalty ID: {self.loyalty_id}\n"
+            f"Contact: {self.email}, {self.phone}\n"
+            f"Checked Bags: {self.bags_checked}\n"
+            f"Meal Preference: {self.meal_preference or 'Not set'}\n"
+            f"Special Assistance: {self.special_assistance or 'None'}\n"
+            "Upcoming Segments:\n"
+            f"{summary}\n"
+            "Recent Service Timeline:\n"
+            f"{recent or '  * No service actions recorded yet.'}"
+        )
+
 
 class AirlineAgentContext(BaseModel):
     customer_profile: CustomerProfile

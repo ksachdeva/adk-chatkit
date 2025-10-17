@@ -9,11 +9,9 @@ from dishka.integrations.fastapi import (
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import Response, StreamingResponse
 from google.adk.sessions.base_session_service import BaseSessionService
-from pydantic import BaseModel
 from starlette.responses import JSONResponse
 
 from backend._config import Settings
-from backend._runner_manager import RunnerManager
 from backend.agents.airline import AirlineAgentContext, AirlineSupportChatkitServer
 
 router = APIRouter(route_class=DishkaRoute)
@@ -23,7 +21,6 @@ router = APIRouter(route_class=DishkaRoute)
 async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
-    runner_manager: FromDishka[RunnerManager],
     request_server: FromDishka[AirlineSupportChatkitServer],
 ) -> Response:
     payload = await request.body()
@@ -61,7 +58,8 @@ async def customer_snapshot(
     user_id = "ksachdeva-1"
 
     if not thread_id:
-        thread_id = "default-thread"
+        context = AirlineAgentContext.create_initial_context().model_dump()
+        return {"customer": context["customer_profile"]}
 
     session = await session_service.get_session(
         app_name=settings.AIRLINE_APP_NAME,
@@ -70,18 +68,11 @@ async def customer_snapshot(
     )
 
     if not session:
-        airline_context = AirlineAgentContext.create_initial_context()
-        session = await session_service.create_session(
-            app_name=settings.AIRLINE_APP_NAME,
-            user_id=user_id,
-            session_id=thread_id,
-            state={"context": airline_context.model_dump()},
-        )
+        raise ValueError(f"Session with id {thread_id} not found")
 
     context: dict[str, Any] | None = session.state.get("context", None)
 
     if context is None:
-        context = AirlineAgentContext.create_initial_context().model_dump()
-        session.state["context"] = context
+        raise ValueError(f"No context found in session {thread_id}")
 
     return {"customer": context["customer_profile"]}

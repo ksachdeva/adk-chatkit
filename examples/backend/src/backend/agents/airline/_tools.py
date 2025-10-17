@@ -3,6 +3,20 @@ from google.adk.tools import ToolContext
 from ._state import AirlineAgentContext
 
 
+def get_customer_profile(
+    tool_context: ToolContext,
+) -> str:
+    """Retrieve the customer's profile.
+
+    Returns:
+        A string with the formatted customer profile.
+    """
+
+    context: AirlineAgentContext = AirlineAgentContext.model_validate(tool_context.state["context"])
+
+    return context.customer_profile.format()
+
+
 def change_seat(
     flight_number: str,
     seat: str,
