@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     gpt41_mini_agent: AgentConfig
 
     AIRLINE_APP_NAME: str = "airline"
+    FACTS_APP_NAME: str = "facts"
 
     SESSION_STORAGE_TYPE: SessionStorageType = SessionStorageType.memory
 

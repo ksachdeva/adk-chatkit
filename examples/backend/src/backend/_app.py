@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from ._config import Settings
 from ._runner_manager import RunnerManager
+from .api.facts import router as facts_router
 from .api.health import router as health_router
 from .api.support import router as support_router
 
@@ -54,3 +55,4 @@ class App(fastapi.FastAPI):
 
         self.include_router(health_router, tags=["healthcheck"])
         self.include_router(support_router, prefix="/support", tags=["support"])
+        self.include_router(facts_router, prefix="/facts", tags=["facts"])

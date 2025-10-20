@@ -35,7 +35,7 @@ export default function CustomerSupport() {
   }, []);
 
   const handleResponseCompleted = useCallback(() => {
-    void refresh();
+    refresh();
   }, [refresh]);
 
   return (

@@ -8,6 +8,7 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from ._config import SessionStorageType, Settings
 from ._runner_manager import RunnerManager
 from .agents.airline import AirlineSupportChatkitServer
+from .agents.facts import FactsChatkitServer
 
 
 class SessionServiceProvider(Provider):
@@ -35,9 +36,14 @@ def get_providers() -> list[BaseProvider]:
     airline_support_server_provider.from_context(Settings)
     airline_support_server_provider.provide(AirlineSupportChatkitServer)
 
+    facts_server_provider = Provider(scope=Scope.APP)
+    facts_server_provider.from_context(Settings)
+    facts_server_provider.provide(FactsChatkitServer)
+
     return [
         runner_provider,
         SessionServiceProvider(),
         adk_store_provider,
         airline_support_server_provider,
+        facts_server_provider,
     ]

@@ -7,7 +7,7 @@ export default function App() {
             <a href="/customer-support">Customer Support</a>
           </li>
           <li>
-            <a href="/marketing-assets">Marketing Assets</a>
+            <a href="/guide">Chatkit Guide & Facts</a>
           </li>
         </ul>
       </nav>

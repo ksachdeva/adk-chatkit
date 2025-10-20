@@ -12,7 +12,11 @@ export default defineConfig({
       "/support": {
         target: backendTarget,
         changeOrigin: true,
-      },
+      },      
+      "/facts": {
+        target: backendTarget,
+        changeOrigin: true,
+      }      
     },
     // For production deployments, you need to add your public domains to this list
     allowedHosts: [

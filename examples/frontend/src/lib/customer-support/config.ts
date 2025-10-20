@@ -5,12 +5,6 @@ export const THEME_STORAGE_KEY = "adk-chatkit-theme";
 const SUPPORT_API_BASE =
   import.meta.env.VITE_SUPPORT_API_BASE ?? "/support";
 
-/**
- * ChatKit still expects a domain key at runtime. Use any placeholder locally,
- * but register your production domain at
- * https://platform.openai.com/settings/organization/security/domain-allowlist
- * and deploy the real key.
- */
 export const SUPPORT_CHATKIT_API_DOMAIN_KEY =
   import.meta.env.VITE_SUPPORT_CHATKIT_API_DOMAIN_KEY ?? "domain_pk_localhost_dev";
 
