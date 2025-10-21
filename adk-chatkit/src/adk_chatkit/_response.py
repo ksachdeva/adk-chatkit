@@ -16,10 +16,10 @@ from chatkit.types import (
     ThreadStreamEvent,
     WidgetItem,
 )
-from chatkit.widgets import Card
 from google.adk.events import Event
 
-from ._types import ClientToolCallState
+from ._client_tool_call import ClientToolCallState
+from ._constants import CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, WIDGET_KEY_IN_TOOL_RESPONSE
 
 
 async def stream_agent_response(
@@ -59,7 +59,7 @@ async def stream_agent_response(
                 for fn_response in fn_responses:
                     if not fn_response.response:
                         continue
-                    widget = fn_response.response.get("widget", None)
+                    widget = fn_response.response.get(WIDGET_KEY_IN_TOOL_RESPONSE, None)
                     if widget:
                         # No Streaming for Widgets for now
                         yield ThreadItemDoneEvent(
@@ -67,10 +67,12 @@ async def stream_agent_response(
                                 id=str(uuid.uuid4()),
                                 thread_id=thread.id,
                                 created_at=datetime.fromtimestamp(event.timestamp),
-                                widget=Card.model_validate(widget),
+                                widget=widget,
                             )
                         )
-                    adk_client_tool: ClientToolCallState = fn_response.response.get("adk-client-tool", None)
+                    adk_client_tool: ClientToolCallState | None = fn_response.response.get(
+                        CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None
+                    )
                     if adk_client_tool:
                         yield ThreadItemDoneEvent(
                             item=ClientToolCallItem(
@@ -80,7 +82,7 @@ async def stream_agent_response(
                                 arguments=adk_client_tool.arguments,
                                 status=adk_client_tool.status,
                                 created_at=datetime.fromtimestamp(event.timestamp),
-                                call_id=fn_response.id,
+                                call_id=fn_response.id,  # type: ignore
                             ),
                         )
 

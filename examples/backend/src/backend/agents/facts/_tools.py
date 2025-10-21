@@ -1,10 +1,9 @@
 from typing import Any, Final, Literal
 
-from adk_chatkit import ClientToolCallState
-from google.adk.events import Event
+from adk_chatkit import ClientToolCallState, add_client_tool_call_to_tool_response, add_widget_to_tool_response
 from google.adk.tools import ToolContext
 
-from ._sample_widget import render_weather_widget, weather_widget_copy_text
+from ._sample_widget import render_weather_widget
 from ._state import FactContext
 from ._weather import WeatherLookupError, retrieve_weather
 from ._weather import normalize_unit as normalize_temperature_unit
@@ -49,7 +48,11 @@ async def save_fact(
         arguments={"fact_id": confirmed.id, "fact_text": confirmed.text},
     )
 
-    return {"adk-client-tool": client_tool_call, "fact_id": confirmed.id, "status": "saved"}
+    result = {"fact_id": confirmed.id, "status": "saved"}
+
+    add_client_tool_call_to_tool_response(result, client_tool_call)
+
+    return result
 
 
 async def switch_theme(theme: str) -> dict[str, str]:
@@ -67,7 +70,12 @@ async def switch_theme(theme: str) -> dict[str, str]:
         name=CLIENT_THEME_TOOL_NAME,
         arguments={"theme": requested},
     )
-    return {"theme": requested, "adk-client-tool": client_tool_call}
+
+    result = {"theme": requested}
+
+    add_client_tool_call_to_tool_response(result, client_tool_call)
+
+    return result
 
 
 async def get_weather(
@@ -108,13 +116,6 @@ async def get_weather(
 
     try:
         widget = render_weather_widget(data)
-        copy_text = weather_widget_copy_text(data)
-        payload: Any
-        try:
-            payload = widget.model_dump()
-        except AttributeError:
-            payload = widget
-        print("[WeatherTool] widget payload", payload)
     except Exception as exc:  # noqa: BLE001
         print("[WeatherTool] widget build failed", {"error": str(exc)})
         raise ValueError("Weather data is currently unavailable for that location.") from exc
@@ -126,6 +127,9 @@ async def get_weather(
     if observed:
         result["observation_time"] = observed
 
-    result["widget"] = payload
+    add_widget_to_tool_response(
+        result,
+        widget,
+    )
 
     return result

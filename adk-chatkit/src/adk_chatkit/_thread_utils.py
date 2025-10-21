@@ -1,9 +1,7 @@
 import json
-from typing import Any, Final
+from typing import Any
 
 from chatkit.types import ThreadMetadata
-
-STATE_CHATKIT_THREAD_METADTA_KEY: Final[str] = "chatkit-thread-metadata"
 
 
 def serialize_thread_metadata(thread: ThreadMetadata) -> dict[str, Any]:

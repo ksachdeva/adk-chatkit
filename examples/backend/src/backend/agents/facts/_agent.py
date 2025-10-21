@@ -1,13 +1,9 @@
-from copy import deepcopy
-from typing import Any, Dict, Final, Optional
+from typing import Final
 
+from adk_chatkit import remove_widgets_and_client_tool_calls
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.llm_agent import LlmAgent
-from google.adk.models import LlmRequest, LlmResponse
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.tools import FunctionTool
-from google.adk.tools.base_tool import BaseTool
-from google.adk.tools.tool_context import ToolContext
 from google.genai import types as genai_types
 
 from ._state import FactContext
@@ -56,43 +52,6 @@ def _ensure_context(callback_context: CallbackContext) -> None:
         callback_context.state["context"] = facts_context.model_dump()
 
 
-def _inspect_model_callback(
-    callback_context: CallbackContext,
-    llm_request: LlmRequest,
-) -> LlmResponse | None:
-    for c in llm_request.contents:
-        if c.parts is None:
-            continue
-        for p in c.parts:
-            if not p.function_response:
-                continue
-            if p.function_response.response:
-                p.function_response.response.pop("widget", None)
-                p.function_response.response.pop("adk-client-tool", None)
-
-    print(llm_request)
-
-    return None
-
-
-def simple_after_tool_modifier(
-    tool: BaseTool,
-    args: Dict[str, Any],
-    tool_context: ToolContext,
-    tool_response: Dict,
-) -> Optional[Dict]:
-    print("######## after tool callback")
-    # print(tool_response)
-
-    # if tool_response:
-    #     if "widget" in tool_response:
-    #         output_tool_response = deepcopy(tool_response)
-    #         output_tool_response.pop("widget")
-    #         return output_tool_response
-
-    return None
-
-
 class FactsAgent(LlmAgent):
     def __init__(
         self,
@@ -112,7 +71,6 @@ class FactsAgent(LlmAgent):
                 switch_theme,
             ],
             before_agent_callback=_ensure_context,
-            before_model_callback=_inspect_model_callback,
-            after_tool_callback=simple_after_tool_modifier,
+            before_model_callback=remove_widgets_and_client_tool_calls,
             generate_content_config=generate_content_config,
         )

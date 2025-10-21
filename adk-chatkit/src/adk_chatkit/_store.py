@@ -21,9 +21,10 @@ from google.adk.events import Event, EventActions
 from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
+from ._client_tool_call import ClientToolCallState
+from ._constants import CHATKIT_THREAD_METADTA_KEY, CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, WIDGET_KEY_IN_TOOL_RESPONSE
 from ._context import ADKContext
-from ._thread_utils import STATE_CHATKIT_THREAD_METADTA_KEY, serialize_thread_metadata
-from ._types import ClientToolCallState
+from ._thread_utils import serialize_thread_metadata
 
 
 def _to_user_message_content(event: Event) -> list[UserMessageContent]:
@@ -66,7 +67,7 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
             )
 
-        return ThreadMetadata.model_validate(session.state[STATE_CHATKIT_THREAD_METADTA_KEY])
+        return ThreadMetadata.model_validate(session.state[CHATKIT_THREAD_METADTA_KEY])
 
     async def save_thread(self, thread: ThreadMetadata, context: ADKContext) -> None:
         session = await self._session_service.get_session(
@@ -80,11 +81,11 @@ class ADKStore(Store[ADKContext]):
                 app_name=context["app_name"],
                 user_id=context["user_id"],
                 session_id=thread.id,
-                state={STATE_CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
+                state={CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
             )
         else:
             state_delta = {
-                STATE_CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread),
+                CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread),
             }
             actions_with_update = EventActions(state_delta=state_delta)
             system_event = Event(
@@ -126,21 +127,6 @@ class ADKStore(Store[ADKContext]):
                     attachments=[],
                     inference_options=InferenceOptions(),
                 )
-            elif event.author == "system":
-                # see if an event whose custom metadata has widget
-                if not event.custom_metadata:
-                    continue
-                widget = event.custom_metadata.get("widget", None)
-                if not widget:
-                    continue
-
-                an_item = WidgetItem(
-                    id=event.id,
-                    thread_id=thread_id,
-                    created_at=datetime.fromtimestamp(event.timestamp),
-                    widget=Card.model_validate(widget),
-                )
-
             else:
                 # we should only send the message if it has content
                 # that is not function calls or response
@@ -161,7 +147,7 @@ class ADKStore(Store[ADKContext]):
                             if not fn_response.response:
                                 continue
                             # let's check for widget in the response
-                            widget = fn_response.response.get("widget", None)
+                            widget = fn_response.response.get(WIDGET_KEY_IN_TOOL_RESPONSE, None)
                             if widget:
                                 an_item = WidgetItem(
                                     id=event.id,
@@ -170,7 +156,7 @@ class ADKStore(Store[ADKContext]):
                                     widget=Card.model_validate(widget),
                                 )
                             # let's check for adk-client-tool in the response
-                            adk_client_tool = fn_response.response.get("adk-client-tool", None)
+                            adk_client_tool = fn_response.response.get(CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None)
                             if adk_client_tool:
                                 adk_client_tool = ClientToolCallState.model_validate(adk_client_tool)
                                 an_item = ClientToolCallItem(
@@ -232,7 +218,7 @@ class ADKStore(Store[ADKContext]):
         items: list[ThreadMetadata] = []
 
         for session in sessions_response.sessions:
-            thread_metatdata_item = ThreadMetadata.model_validate(session.state[STATE_CHATKIT_THREAD_METADTA_KEY])
+            thread_metatdata_item = ThreadMetadata.model_validate(session.state[CHATKIT_THREAD_METADTA_KEY])
             items.append(thread_metatdata_item)
 
         return Page(data=items)
