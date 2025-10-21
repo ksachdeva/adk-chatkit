@@ -18,3 +18,6 @@ echo 'eval "$(uvx --generate-shell-completion zsh)"' >> "/home/$USERNAME/.zshrc"
 
 echo "uv sync ..."
 uv sync
+
+echo "install pre-commit hooks ..."
+uv run pre-commit install
