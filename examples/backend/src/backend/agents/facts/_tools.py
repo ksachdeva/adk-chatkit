@@ -1,5 +1,7 @@
 from typing import Any, Final, Literal
 
+from adk_chatkit import ClientToolCallState
+from google.adk.events import Event
 from google.adk.tools import ToolContext
 
 from ._sample_widget import render_weather_widget, weather_widget_copy_text
@@ -25,14 +27,11 @@ def _normalize_color_scheme(value: str) -> str:
 async def save_fact(
     fact: str,
     tool_context: ToolContext,
-) -> dict[str, str]:
+) -> dict[str, Any]:
     """Record a fact shared by the user so it is saved immediately.
 
     Args:
         fact: A short, declarative statement summarizing a fact shared by the user.
-
-    Returns:
-        A dictionary containing the ID and text of the saved fact.
     """
 
     fact_context: FactContext = FactContext.model_validate(tool_context.state["context"])
@@ -45,7 +44,12 @@ async def save_fact(
 
     tool_context.state["context"] = fact_context.model_dump()
 
-    return {"fact_id": confirmed.id, "text": confirmed.text}
+    client_tool_call = ClientToolCallState(
+        name="record_fact",
+        arguments={"fact_id": confirmed.id, "fact_text": confirmed.text},
+    )
+
+    return {"adk-client-tool": client_tool_call, "fact_id": confirmed.id, "status": "saved"}
 
 
 async def switch_theme(theme: str) -> dict[str, str]:
@@ -59,11 +63,11 @@ async def switch_theme(theme: str) -> dict[str, str]:
     """
 
     requested = _normalize_color_scheme(theme)
-    # ctx.context.client_tool_call = ClientToolCall(
-    #     name=CLIENT_THEME_TOOL_NAME,
-    #     arguments={"theme": requested},
-    # )
-    return {"theme": requested}
+    client_tool_call = ClientToolCallState(
+        name=CLIENT_THEME_TOOL_NAME,
+        arguments={"theme": requested},
+    )
+    return {"theme": requested, "adk-client-tool": client_tool_call}
 
 
 async def get_weather(
@@ -77,7 +81,8 @@ async def get_weather(
         location: The location to look up the weather for.
         unit: The temperature unit to use, either 'celsius' or 'fahrenheit'.
 
-
+    Returns:
+        A dictionary confirming the location and unit used for the lookup.
     """
     print("[WeatherTool] tool invoked", {"location": location, "unit": unit})
     try:
@@ -114,20 +119,13 @@ async def get_weather(
         print("[WeatherTool] widget build failed", {"error": str(exc)})
         raise ValueError("Weather data is currently unavailable for that location.") from exc
 
-    # print("[WeatherTool] streaming widget")
-    # try:
-    #     await ctx.context.stream_widget(widget, copy_text=copy_text)
-    # except Exception as exc:  # noqa: BLE001
-    #     print("[WeatherTool] widget stream failed", {"error": str(exc)})
-    #     raise ValueError("Weather data is currently unavailable for that location.") from exc
-
-    # print("[WeatherTool] widget streamed")
-
     observed = data.observation_time.isoformat() if data.observation_time else None
 
     result = {"location": data.location, "unit": normalized_unit}
 
     if observed:
         result["observation_time"] = observed
+
+    result["widget"] = payload
 
     return result

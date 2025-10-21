@@ -1,6 +1,4 @@
-import json
 from datetime import datetime
-from typing import Any, Final
 from uuid import uuid4
 
 from chatkit.store import Store
@@ -8,6 +6,7 @@ from chatkit.types import (
     AssistantMessageContent,
     AssistantMessageItem,
     Attachment,
+    ClientToolCallItem,
     InferenceOptions,
     Page,
     ThreadItem,
@@ -15,14 +14,16 @@ from chatkit.types import (
     UserMessageContent,
     UserMessageItem,
     UserMessageTextContent,
+    WidgetItem,
 )
+from chatkit.widgets import Card
 from google.adk.events import Event, EventActions
 from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
 from ._context import ADKContext
-
-_CHATKIT_THREAD_METADTA: Final[str] = "chatkit-thread-metadata"
+from ._thread_utils import STATE_CHATKIT_THREAD_METADTA_KEY, serialize_thread_metadata
+from ._types import ClientToolCallState
 
 
 def _to_user_message_content(event: Event) -> list[UserMessageContent]:
@@ -49,11 +50,6 @@ def _to_assistant_message_content(event: Event) -> list[AssistantMessageContent]
     return contents
 
 
-def _serialize_thread_metadata(thread: ThreadMetadata) -> dict[str, Any]:
-    json_dump = thread.model_dump_json(exclude_none=True, exclude={"items"})
-    return json.loads(json_dump)  # type: ignore
-
-
 class ADKStore(Store[ADKContext]):
     def __init__(self, session_service: BaseSessionService) -> None:
         self._session_service = session_service
@@ -70,7 +66,7 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
             )
 
-        return ThreadMetadata.model_validate(session.state[_CHATKIT_THREAD_METADTA])
+        return ThreadMetadata.model_validate(session.state[STATE_CHATKIT_THREAD_METADTA_KEY])
 
     async def save_thread(self, thread: ThreadMetadata, context: ADKContext) -> None:
         session = await self._session_service.get_session(
@@ -84,11 +80,11 @@ class ADKStore(Store[ADKContext]):
                 app_name=context["app_name"],
                 user_id=context["user_id"],
                 session_id=thread.id,
-                state={_CHATKIT_THREAD_METADTA: _serialize_thread_metadata(thread)},
+                state={STATE_CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
             )
         else:
             state_delta = {
-                _CHATKIT_THREAD_METADTA: _serialize_thread_metadata(thread),
+                STATE_CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread),
             }
             actions_with_update = EventActions(state_delta=state_delta)
             system_event = Event(
@@ -130,13 +126,62 @@ class ADKStore(Store[ADKContext]):
                     attachments=[],
                     inference_options=InferenceOptions(),
                 )
-            else:
-                an_item = AssistantMessageItem(
+            elif event.author == "system":
+                # see if an event whose custom metadata has widget
+                if not event.custom_metadata:
+                    continue
+                widget = event.custom_metadata.get("widget", None)
+                if not widget:
+                    continue
+
+                an_item = WidgetItem(
                     id=event.id,
                     thread_id=thread_id,
                     created_at=datetime.fromtimestamp(event.timestamp),
-                    content=_to_assistant_message_content(event),
+                    widget=Card.model_validate(widget),
                 )
+
+            else:
+                # we should only send the message if it has content
+                # that is not function calls or response
+                text_message_content = _to_assistant_message_content(event)
+
+                if text_message_content:
+                    an_item = AssistantMessageItem(
+                        id=event.id,
+                        thread_id=thread_id,
+                        created_at=datetime.fromtimestamp(event.timestamp),
+                        content=text_message_content,
+                    )
+                else:
+                    # let's see if this a function call response
+                    # with a widget. If yes, then we will tranmist WidgetItem
+                    if fn_responses := event.get_function_responses():
+                        for fn_response in fn_responses:
+                            if not fn_response.response:
+                                continue
+                            # let's check for widget in the response
+                            widget = fn_response.response.get("widget", None)
+                            if widget:
+                                an_item = WidgetItem(
+                                    id=event.id,
+                                    thread_id=thread_id,
+                                    created_at=datetime.fromtimestamp(event.timestamp),
+                                    widget=Card.model_validate(widget),
+                                )
+                            # let's check for adk-client-tool in the response
+                            adk_client_tool = fn_response.response.get("adk-client-tool", None)
+                            if adk_client_tool:
+                                adk_client_tool = ClientToolCallState.model_validate(adk_client_tool)
+                                an_item = ClientToolCallItem(
+                                    id=event.id,
+                                    thread_id=thread_id,
+                                    name=adk_client_tool.name,
+                                    arguments=adk_client_tool.arguments,
+                                    status=adk_client_tool.status,
+                                    created_at=datetime.fromtimestamp(event.timestamp),
+                                    call_id=fn_response.id,
+                                )
 
             if an_item:
                 thread_items.append(an_item)
@@ -157,13 +202,17 @@ class ADKStore(Store[ADKContext]):
         raise NotImplementedError()
 
     async def delete_thread_item(self, thread_id: str, item_id: str, context: ADKContext) -> None:
-        raise NotImplementedError()
+        # deletion is called primarily to remove the ClientToolCallItem calls
+        # we simply ignore them here as they are not stored separately
+        pass
 
     async def delete_thread(self, thread_id: str, context: ADKContext) -> None:
         raise NotImplementedError()
 
     async def save_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
-        raise NotImplementedError()
+        # we will only handle specify types of items here
+        # as quite many are automatically handled by runner
+        pass
 
     async def load_item(self, thread_id: str, item_id: str, context: ADKContext) -> ThreadItem:
         raise NotImplementedError()
@@ -183,7 +232,7 @@ class ADKStore(Store[ADKContext]):
         items: list[ThreadMetadata] = []
 
         for session in sessions_response.sessions:
-            thread_metatdata_item = ThreadMetadata.model_validate(session.state[_CHATKIT_THREAD_METADTA])
+            thread_metatdata_item = ThreadMetadata.model_validate(session.state[STATE_CHATKIT_THREAD_METADTA_KEY])
             items.append(thread_metatdata_item)
 
         return Page(data=items)

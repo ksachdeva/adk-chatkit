@@ -8,13 +8,18 @@ from chatkit.types import (
     AssistantMessageContentPartDone,
     AssistantMessageContentPartTextDelta,
     AssistantMessageItem,
+    ClientToolCallItem,
     ThreadItemAddedEvent,
     ThreadItemDoneEvent,
     ThreadItemUpdated,
     ThreadMetadata,
     ThreadStreamEvent,
+    WidgetItem,
 )
+from chatkit.widgets import Card
 from google.adk.events import Event
+
+from ._types import ClientToolCallState
 
 
 async def stream_agent_response(
@@ -48,6 +53,37 @@ async def stream_agent_response(
                 ),
             )
         else:
+            # Since Widgets are recorded in the function responses
+            # they are handled here
+            if fn_responses := event.get_function_responses():
+                for fn_response in fn_responses:
+                    if not fn_response.response:
+                        continue
+                    widget = fn_response.response.get("widget", None)
+                    if widget:
+                        # No Streaming for Widgets for now
+                        yield ThreadItemDoneEvent(
+                            item=WidgetItem(
+                                id=str(uuid.uuid4()),
+                                thread_id=thread.id,
+                                created_at=datetime.fromtimestamp(event.timestamp),
+                                widget=Card.model_validate(widget),
+                            )
+                        )
+                    adk_client_tool: ClientToolCallState = fn_response.response.get("adk-client-tool", None)
+                    if adk_client_tool:
+                        yield ThreadItemDoneEvent(
+                            item=ClientToolCallItem(
+                                id=str(uuid.uuid4()),
+                                thread_id=thread.id,
+                                name=adk_client_tool.name,
+                                arguments=adk_client_tool.arguments,
+                                status=adk_client_tool.status,
+                                created_at=datetime.fromtimestamp(event.timestamp),
+                                call_id=fn_response.id,
+                            ),
+                        )
+
             if event.content.parts:
                 text_from_final_update = ""
                 for p in event.content.parts:
