@@ -24,7 +24,12 @@ from google.adk.sessions.base_session_service import ListSessionsResponse
 from ._client_tool_call import ClientToolCallState
 from ._constants import CHATKIT_THREAD_METADTA_KEY, CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, WIDGET_KEY_IN_TOOL_RESPONSE
 from ._context import ADKContext
-from ._thread_utils import serialize_thread_metadata
+from ._thread_utils import (
+    add_client_tool_status,
+    get_client_tool_status,
+    get_thread_metadata_from_state,
+    serialize_thread_metadata,
+)
 
 
 def _to_user_message_content(event: Event) -> list[UserMessageContent]:
@@ -67,7 +72,7 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
             )
 
-        return ThreadMetadata.model_validate(session.state[CHATKIT_THREAD_METADTA_KEY])
+        return get_thread_metadata_from_state(session.state)
 
     async def save_thread(self, thread: ThreadMetadata, context: ADKContext) -> None:
         session = await self._session_service.get_session(
@@ -159,15 +164,20 @@ class ADKStore(Store[ADKContext]):
                             adk_client_tool = fn_response.response.get(CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None)
                             if adk_client_tool:
                                 adk_client_tool = ClientToolCallState.model_validate(adk_client_tool)
-                                an_item = ClientToolCallItem(
-                                    id=event.id,
-                                    thread_id=thread_id,
-                                    name=adk_client_tool.name,
-                                    arguments=adk_client_tool.arguments,
-                                    status=adk_client_tool.status,
-                                    created_at=datetime.fromtimestamp(event.timestamp),
-                                    call_id=fn_response.id,
+                                status = get_client_tool_status(
+                                    session.state,
+                                    adk_client_tool.id,
                                 )
+                                if status:
+                                    an_item = ClientToolCallItem(
+                                        id=event.id,
+                                        thread_id=thread_id,
+                                        name=adk_client_tool.name,
+                                        arguments=adk_client_tool.arguments,
+                                        status=status,  # type: ignore
+                                        created_at=datetime.fromtimestamp(event.timestamp),
+                                        call_id=adk_client_tool.id,
+                                    )
 
             if an_item:
                 thread_items.append(an_item)
@@ -188,8 +198,7 @@ class ADKStore(Store[ADKContext]):
         raise NotImplementedError()
 
     async def delete_thread_item(self, thread_id: str, item_id: str, context: ADKContext) -> None:
-        # deletion is called primarily to remove the ClientToolCallItem calls
-        # we simply ignore them here as they are not stored separately
+        # simply ignoring it for now (ClientToolCallItem is typically not deleted because of this)
         pass
 
     async def delete_thread(self, thread_id: str, context: ADKContext) -> None:
@@ -198,7 +207,32 @@ class ADKStore(Store[ADKContext]):
     async def save_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
         # we will only handle specify types of items here
         # as quite many are automatically handled by runner
-        pass
+        if isinstance(item, ClientToolCallItem):
+            session = await self._session_service.get_session(
+                app_name=context["app_name"],
+                user_id=context["user_id"],
+                session_id=thread_id,
+            )
+
+            if not session:
+                raise ValueError(
+                    f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
+                )
+
+            thread_metadata = add_client_tool_status(session.state, item.call_id, item.status)
+
+            state_delta = {
+                CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread_metadata),
+            }
+
+            actions_with_update = EventActions(state_delta=state_delta)
+            system_event = Event(
+                invocation_id=uuid4().hex,
+                author="system",
+                actions=actions_with_update,
+                timestamp=datetime.now().timestamp(),
+            )
+            await self._session_service.append_event(session, system_event)
 
     async def load_item(self, thread_id: str, item_id: str, context: ADKContext) -> ThreadItem:
         raise NotImplementedError()
@@ -218,7 +252,7 @@ class ADKStore(Store[ADKContext]):
         items: list[ThreadMetadata] = []
 
         for session in sessions_response.sessions:
-            thread_metatdata_item = ThreadMetadata.model_validate(session.state[CHATKIT_THREAD_METADTA_KEY])
-            items.append(thread_metatdata_item)
+            thread_metadata = get_thread_metadata_from_state(session.state)
+            items.append(thread_metadata)
 
         return Page(data=items)

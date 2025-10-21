@@ -50,12 +50,12 @@ async def save_fact(
 
     result = {"fact_id": confirmed.id, "status": "saved"}
 
-    add_client_tool_call_to_tool_response(result, client_tool_call)
+    add_client_tool_call_to_tool_response(result, client_tool_call, tool_context)
 
     return result
 
 
-async def switch_theme(theme: str) -> dict[str, str]:
+async def switch_theme(theme: str, tool_context: ToolContext) -> dict[str, str]:
     """Switch the chat interface between light and dark color schemes.
 
     Args:
@@ -73,7 +73,7 @@ async def switch_theme(theme: str) -> dict[str, str]:
 
     result = {"theme": requested}
 
-    add_client_tool_call_to_tool_response(result, client_tool_call)
+    add_client_tool_call_to_tool_response(result, client_tool_call, tool_context)
 
     return result
 

@@ -40,7 +40,7 @@ async def stream_agent_response(
                     id=response_id,
                     content=[],
                     thread_id=thread.id,
-                    created_at=datetime.now(),
+                    created_at=datetime.fromtimestamp(event.timestamp),
                 )
             )
 
@@ -76,13 +76,13 @@ async def stream_agent_response(
                     if adk_client_tool:
                         yield ThreadItemDoneEvent(
                             item=ClientToolCallItem(
-                                id=str(uuid.uuid4()),
+                                id=event.id,
                                 thread_id=thread.id,
                                 name=adk_client_tool.name,
                                 arguments=adk_client_tool.arguments,
                                 status=adk_client_tool.status,
                                 created_at=datetime.fromtimestamp(event.timestamp),
-                                call_id=fn_response.id,  # type: ignore
+                                call_id=adk_client_tool.id,
                             ),
                         )
 
@@ -113,6 +113,6 @@ async def stream_agent_response(
                         id=response_id,
                         content=[AssistantMessageContent(text=text_from_final_update)],
                         thread_id=thread.id,
-                        created_at=datetime.now(),
+                        created_at=datetime.fromtimestamp(event.timestamp),
                     )
                 )
