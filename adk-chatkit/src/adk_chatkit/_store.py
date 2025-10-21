@@ -202,7 +202,9 @@ class ADKStore(Store[ADKContext]):
         pass
 
     async def delete_thread(self, thread_id: str, context: ADKContext) -> None:
-        raise NotImplementedError()
+        await self._session_service.delete_session(
+            app_name=context["app_name"], user_id=context["user_id"], session_id=thread_id
+        )
 
     async def save_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
         # we will only handle specify types of items here
