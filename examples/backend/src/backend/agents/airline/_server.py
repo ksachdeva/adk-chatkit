@@ -72,14 +72,6 @@ class AirlineSupportChatkitServer(ChatKitServer[ADKContext]):
         if not message_text:
             return
 
-        session = await self._session_service.get_session(
-            app_name=context["app_name"],
-            user_id=context["user_id"],
-            session_id=thread.id,
-        )
-
-        assert session is not None
-
         content = genai_types.Content(
             role="user",
             parts=[genai_types.Part.from_text(text=message_text)],
