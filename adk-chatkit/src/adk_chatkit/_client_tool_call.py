@@ -2,6 +2,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from ._constants import CLIENT_TOOL_KEY_IN_TOOL_RESPONSE
+
 
 class ClientToolCallState(BaseModel):
     """
@@ -23,4 +25,4 @@ def add_client_tool_call_to_tool_response(
         response: The tool response dictionary to modify.
         client_tool_call: The client tool call state to add.
     """
-    response["adk-client-tool"] = client_tool_call
+    response[CLIENT_TOOL_KEY_IN_TOOL_RESPONSE] = client_tool_call
