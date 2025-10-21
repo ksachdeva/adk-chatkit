@@ -9,7 +9,6 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "openai-chatkit>=1.0.2",
-    
 ]
 
 classifiers = [
@@ -30,4 +29,3 @@ repository = "https://github.com/ksachdeva/adk-chatkit"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
