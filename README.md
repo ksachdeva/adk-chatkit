@@ -1,5 +1,22 @@
 # OpenAI chatkit support for Google ADK
 
+This repository provides the backend support for `openai/chatkit-js` (https://github.com/openai/chatkit-js) for Google ADK based agentic applications.
+
+It uses and extends `openai/chatkit-python` (https://github.com/openai/chatkit-python) by providing
+
+- `ADKStore` that wraps `BaseSessionService`
+- A function (`stream_agent_response`) that translate ADK events into chatkit events
+- Provides support to render `widgets`
+    * See examples/backend/src/backend/agents/facts/_tools.py::get_weather
+    * Use `add_widget_to_tool_response` in your tool and `widget` will be sent to client
+- Provides support for making calls to client tools.
+    * Client tools typically run in browser
+    * See examples/backend/src/backend/agents/facts/_tools.py::switch_theme
+    * Use `add_client_tool_call_to_tool_response` in you tool
+
+TODO:
+- Support for attachments / artifacts
+
 ## Install
 
 ```bash
