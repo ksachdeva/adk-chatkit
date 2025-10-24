@@ -3,6 +3,7 @@ dev = [
     "mypy>=1.17.1",
     "poethepoet>=0.37.0",
     "pre-commit>=4.3.0",
+    "psycopg2>=2.9.11",
     "pytest>=8.4.2",
     "pytest-asyncio>=1.2.0",
     "pytest-env>=1.1.5",
@@ -27,7 +28,7 @@ docstring-code-format = true
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "Q", "I", "ASYNC", "T20"]
-ignore = ["F401", "E501"]
+ignore = ["F401", "E501", "T201"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 [tool.ruff.lint.flake8-tidy-imports.banned-api]

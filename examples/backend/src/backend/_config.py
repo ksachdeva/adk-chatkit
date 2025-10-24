@@ -1,16 +1,35 @@
 import os
 from enum import Enum
+from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import AnyUrl, BeforeValidator, computed_field
+from pydantic import AnyUrl, BaseModel, BeforeValidator, SecretStr, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .agents._config import AgentConfig
 
 
+class EmbeddingModelType(str, Enum):
+    openai = "openai"
+    azure_openai = "azure_openai"
+    ollama = "ollama"
+
+
 class SessionStorageType(str, Enum):
     memory = "memory"
     db = "db"
+
+
+class EmbedderSettings(BaseModel):
+    provider_type: EmbeddingModelType
+    model_name: str
+    api_key: SecretStr | None = None
+    api_endpoint: str | None = None
+    api_version: str | None = None
+    api_deployment: str | None = None
+
+    chunk_size: int = 1200
+    chunk_overlap: int = 100
 
 
 def parse_cors(v: Any) -> list[str] | str:
@@ -56,7 +75,12 @@ class Settings(BaseSettings):
 
     AIRLINE_APP_NAME: str = "airline"
     FACTS_APP_NAME: str = "facts"
+    KNOWLEDGE_APP_NAME: str = "knowledge"
+
+    DATA_DIR: Path
 
     SESSION_STORAGE_TYPE: SessionStorageType = SessionStorageType.memory
 
     ADK_DATABASE_URL: str | None = None
+
+    embedder: EmbedderSettings | None = None
