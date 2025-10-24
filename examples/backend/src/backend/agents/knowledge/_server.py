@@ -17,7 +17,6 @@ from chatkit.types import (
 )
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.sessions import BaseSessionService
 from google.genai import types as genai_types
 from langchain_core.vectorstores import VectorStore
 
@@ -26,13 +25,10 @@ from backend._runner_manager import RunnerManager
 
 from ._agent import KnowledgeAgent
 from ._documents import (
-    DOCUMENTS,
     DOCUMENTS_BY_FILENAME,
-    DOCUMENTS_BY_ID,
     DOCUMENTS_BY_SLUG,
     DOCUMENTS_BY_STEM,
     DocumentMetadata,
-    as_dicts,
 )
 from ._tools import Searcher
 
@@ -158,7 +154,6 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
     def __init__(
         self,
         store: ADKStore,
-        session_service: BaseSessionService,
         runner_manager: RunnerManager,
         settings: Settings,
         vector_store: VectorStore,
@@ -167,7 +162,6 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
         self._vector_store = vector_store
         searcher = Searcher(vector_store=self._vector_store)
         agent = _make_knowledge_agent(settings, searcher)
-        self._session_service = session_service
         self._store = store
         self._runner = runner_manager.add_runner(settings.KNOWLEDGE_APP_NAME, agent)
 

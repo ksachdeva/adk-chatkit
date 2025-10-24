@@ -11,7 +11,6 @@ from chatkit.types import (
 )
 from google.adk.agents.run_config import RunConfig, StreamingMode
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.sessions import BaseSessionService
 from google.genai import types as genai_types
 
 from backend._config import Settings
@@ -47,13 +46,11 @@ class AirlineSupportChatkitServer(ChatKitServer[ADKContext]):
     def __init__(
         self,
         store: ADKStore,
-        session_service: BaseSessionService,
         runner_manager: RunnerManager,
         settings: Settings,
     ) -> None:
         super().__init__(store)
         agent = _make_airline_support_agent(settings)
-        self._session_service = session_service
         self._runner = runner_manager.add_runner(settings.AIRLINE_APP_NAME, agent)
 
     async def respond(

@@ -47,13 +47,11 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
     def __init__(
         self,
         store: ADKStore,
-        session_service: BaseSessionService,
         runner_manager: RunnerManager,
         settings: Settings,
     ) -> None:
         super().__init__(store)
         agent = _make_facts_agent(settings)
-        self._session_service = session_service
         self._runner = runner_manager.add_runner(settings.FACTS_APP_NAME, agent)
 
     async def respond(
