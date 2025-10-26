@@ -23,7 +23,7 @@ export const SUPPORT_GREETING =
 export const SUPPORT_STARTER_PROMPTS: StartScreenPrompt[] = [
   {
     label: "Change my seat",
-    prompt: "Can you move me to seat 14C on flight OA476?",
+    prompt: "Can you move me to seat 14C on flight 0A476?",
     icon: "lightbulb",
   },
   {
