@@ -109,6 +109,8 @@ There are 3 applications (ported from https://github.com/openai/openai-chatkit-a
 
 http://localhost:5173/guide
 
+![Weather widget preview](assets/weather.png)
+
 ### Customer Support
 
 - Airline Reservation Management
@@ -117,9 +119,14 @@ http://localhost:5173/guide
 
 http://localhost:5171/customer-support
 
+![Customer Support preview](assets/airline.png)
+
+
 ### Knowledge Assistant
 
 - Answers questions based on files and vector store
 - Shows files and citations
 
 http://localhost:5171/knowledge
+
+![Knowledge preview](assets/knowledge.png)
