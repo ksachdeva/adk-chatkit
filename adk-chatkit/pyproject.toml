@@ -1,7 +1,7 @@
 [project]
 name = "adk-chatkit"
-version = "0.0.2"
-description = "Google ADK with openai chatkit"
+version = "0.0.3"
+description = "OpenAI chatkit backend support for Google ADK"
 readme = "README.md"
 authors = [
     { name = "Sachdeva, Kapil"}
@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.11"
 dependencies = [
     "openai-chatkit>=1.0.2",
+    "google-adk>=1.16.0",
+    "pydantic>=2.11.7",
 ]
 
 classifiers = [

@@ -35,14 +35,20 @@ wheels = [
 
 [[package]]
 name = "adk-chatkit"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "adk-chatkit" }
 dependencies = [
+    { name = "google-adk" },
     { name = "openai-chatkit" },
+    { name = "pydantic" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "openai-chatkit", specifier = ">=1.0.2" }]
+requires-dist = [
+    { name = "google-adk", specifier = ">=1.16.0" },
+    { name = "openai-chatkit", specifier = ">=1.0.2" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+]
 
 [[package]]
 name = "aiofile"
