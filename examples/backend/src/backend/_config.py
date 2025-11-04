@@ -76,6 +76,7 @@ class Settings(BaseSettings):
     AIRLINE_APP_NAME: str = "airline"
     FACTS_APP_NAME: str = "facts"
     KNOWLEDGE_APP_NAME: str = "knowledge"
+    WIDGETS_APP_NAME: str = "widgets"
 
     DATA_DIR: Path
 

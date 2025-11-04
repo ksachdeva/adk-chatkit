@@ -8,7 +8,6 @@ It uses and extends `openai/chatkit-python` (https://github.com/openai/chatkit-p
 - A function (`stream_agent_response`) that translate ADK events into chatkit events
 - Provides support to render `widgets`
     * See examples/backend/src/backend/agents/facts/_tools.py::get_weather
-    * Use `add_widget_to_tool_response` in your tool and `widget` will be sent to client
 - Provides support for making calls to client tools.
     * Client tools typically run in browser
     * See examples/backend/src/backend/agents/facts/_tools.py::switch_theme
@@ -51,7 +50,7 @@ See `examples` for full usage
 
 ```python
 
-from adk_chatkit import ADKContext, ADKStore, stream_agent_response
+from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 
 class FactsChatkitServer(ChatKitServer[ADKContext]):
     def __init__(
@@ -80,19 +79,20 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
         if not message_text:
             return
 
-        content = genai_types.Content(
-            role="user",
-            parts=[genai_types.Part.from_text(text=message_text)],
+        agent_context = ADKAgentContext(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            thread=thread,
         )
 
         event_stream = self._runner.run_async(
-            user_id=context["user_id"],
+            user_id=context.user_id,
             session_id=thread.id,
             new_message=content,
-            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+            run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
         )
 
-        async for event in stream_agent_response(thread, event_stream):
+        async for event in stream_agent_response(agent_context, event_stream):
             yield event
 
 ```

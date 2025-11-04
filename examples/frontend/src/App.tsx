@@ -12,6 +12,9 @@ export default function App() {
           <li>
             <a href="/federal">Knowledge Assistant</a>
           </li>
+          <li>
+            <a href="/widget-gallery">Widget Gallery</a>
+          </li>
         </ul>
       </nav>
     </div>

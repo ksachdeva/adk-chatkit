@@ -4,7 +4,7 @@ from itertools import chain
 from pathlib import Path
 from typing import Any, Iterable
 
-from adk_chatkit import ADKContext, ADKStore, stream_agent_response
+from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, stream_agent_response
 from chatkit.server import ChatKitServer
 from chatkit.types import (
     Annotation,
@@ -207,12 +207,18 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
             parts=[genai_types.Part.from_text(text=message_text)],
         )
 
+        agent_context = ADKAgentContext(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            thread=thread,
+        )
+
         event_stream = self._runner.run_async(
-            user_id=context["user_id"],
+            user_id=context.user_id,
             session_id=thread.id,
             new_message=content,
             run_config=RunConfig(streaming_mode=StreamingMode.NONE),
         )
 
-        async for event in stream_agent_response(thread, event_stream):
+        async for event in stream_agent_response(agent_context, event_stream):
             yield event

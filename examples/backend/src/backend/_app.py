@@ -13,6 +13,7 @@ from .api.facts import router as facts_router
 from .api.health import router as health_router
 from .api.knowledge import router as knowledge_router
 from .api.support import router as support_router
+from .api.widgets import router as widgets_router
 
 
 @asynccontextmanager
@@ -55,3 +56,4 @@ class App(fastapi.FastAPI):
         self.include_router(support_router, prefix="/support", tags=["support"])
         self.include_router(facts_router, prefix="/facts", tags=["facts"])
         self.include_router(knowledge_router, prefix="/knowledge", tags=["knowledge"])
+        self.include_router(widgets_router, prefix="/widgets", tags=["widgets"])

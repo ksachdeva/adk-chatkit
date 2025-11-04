@@ -1,13 +1,5 @@
-from typing import Any
-
-from adk_chatkit import remove_widgets_and_client_tool_calls
-from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.llm_agent import LlmAgent, ToolUnion
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.models.llm_request import LlmRequest
-from google.adk.models.llm_response import LlmResponse
-from google.adk.tools.base_tool import BaseTool
-from google.adk.tools.tool_context import ToolContext
 from google.genai import types as genai_types
 
 _INSTRUCTIONS = """You are a **Federal Reserve Knowledge Assistant agent**.
@@ -57,6 +49,5 @@ class KnowledgeAgent(LlmAgent):
             model=self._llm,
             instruction=_INSTRUCTIONS,
             tools=tools,
-            before_model_callback=[remove_widgets_and_client_tool_calls],
             generate_content_config=generate_content_config,
         )

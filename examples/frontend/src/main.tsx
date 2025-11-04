@@ -6,6 +6,7 @@ const container = document.getElementById("root");
 import App from "./App";
 import FactPage from "./pages/Fact";
 import KnowledgeAssistantPage from "./pages/KnowledgeAssistant";
+import WidgetGallery from "./pages/Widgets";
 
 if (!container) {
   throw new Error("Root element with id 'root' not found");
@@ -18,6 +19,7 @@ createRoot(container).render(
       <Route path="/customer-support" element={<CustomerSupport />} />
       <Route path="/guide" element={<FactPage />} />
       <Route path="/federal" element={<KnowledgeAssistantPage />} />
+      <Route path="/widget-gallery" element={<WidgetGallery />} />
     </Routes>
   </BrowserRouter>
 );

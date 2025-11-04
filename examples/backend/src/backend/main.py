@@ -9,6 +9,10 @@ from backend._app import App
 from backend._config import Settings
 from backend._dishka_providers import get_providers
 
+logging.basicConfig(level=logging.INFO)
+logging.getLogger("adk_chatkit.*").setLevel(logging.DEBUG)
+
+
 _LOGGER = logging.getLogger("uvicorn")
 
 

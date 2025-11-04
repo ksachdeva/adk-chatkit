@@ -7,10 +7,12 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from langchain_core.vectorstores import VectorStore
 
 from ._config import SessionStorageType, Settings
+from ._refreshed_session_service import RefreshedSessionService
 from ._runner_manager import RunnerManager
 from .agents.airline import AirlineSupportChatkitServer
 from .agents.facts import FactsChatkitServer
 from .agents.knowledge import KnowledgeAssistantChatkitServer, make_vector_store
+from .agents.widgets import WidgetsChatkitServer
 
 
 class SessionServiceProvider(Provider):
@@ -21,7 +23,7 @@ class SessionServiceProvider(Provider):
     @provide
     async def get_service(self, settings: Settings) -> BaseSessionService:
         if settings.SESSION_STORAGE_TYPE == SessionStorageType.db:
-            return DatabaseSessionService(settings.ADK_DATABASE_URL)  # type: ignore
+            return RefreshedSessionService(settings.ADK_DATABASE_URL)  # type: ignore
 
         return InMemorySessionService()  # type: ignore
 
@@ -58,6 +60,10 @@ def get_providers() -> list[BaseProvider]:
     knowledge_server_provider.from_context(Settings)
     knowledge_server_provider.provide(KnowledgeAssistantChatkitServer)
 
+    widget_server_provider = Provider(scope=Scope.APP)
+    widget_server_provider.from_context(Settings)
+    widget_server_provider.provide(WidgetsChatkitServer)
+
     return [
         runner_provider,
         SessionServiceProvider(),
@@ -66,4 +72,5 @@ def get_providers() -> list[BaseProvider]:
         airline_support_server_provider,
         facts_server_provider,
         knowledge_server_provider,
+        widget_server_provider,
     ]

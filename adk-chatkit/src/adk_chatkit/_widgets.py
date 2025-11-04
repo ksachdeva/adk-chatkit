@@ -1,18 +1,9 @@
+import json
 from typing import Any
 
-from chatkit.widgets import WidgetRoot
-
-from ._constants import WIDGET_KEY_IN_TOOL_RESPONSE
+from chatkit.types import WidgetItem
 
 
-def add_widget_to_tool_response(
-    response: dict[str, Any],
-    widget: WidgetRoot,
-) -> None:
-    """Add a widget to a tool response dictionary.
-
-    Args:
-        response: The tool response dictionary to modify.
-        widget: The widget to add.
-    """
-    response[WIDGET_KEY_IN_TOOL_RESPONSE] = widget
+def serialize_widget_item(widget: WidgetItem) -> dict[str, Any]:
+    json_dump = widget.model_dump_json(exclude_none=True)
+    return json.loads(json_dump)  # type: ignore

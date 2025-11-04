@@ -1,0 +1,63 @@
+{
+  "type": "ListView",
+  "children": [
+    {
+      "type": "ListViewItem",
+      "key": "view",
+      "gap": 3,
+      "onClickAction": {
+        "type": "tasks.view"
+      },
+      "children": [
+        {
+          "type": "Box",
+          "background": "alpha-10",
+          "radius": "sm",
+          "padding": 2,
+          "children": [
+            {
+              "type": "Icon",
+              "name": "square-text",
+              "size": "lg"
+            }
+          ]
+        },
+        {
+          "type": "Text",
+          "value": "View Tasks",
+          "size": "sm",
+          "weight": "semibold"
+        }
+      ]
+    },
+    {
+      "type": "ListViewItem",
+      "key": "create",
+      "gap": 3,
+      "onClickAction": {
+        "type": "task.create"
+      },
+      "children": [
+        {
+          "type": "Box",
+          "background": "alpha-10",
+          "radius": "sm",
+          "padding": 2,
+          "children": [
+            {
+              "type": "Icon",
+              "name": "plus",
+              "size": "lg"
+            }
+          ]
+        },
+        {
+          "type": "Text",
+          "value": "Create Task",
+          "size": "sm",
+          "weight": "semibold"
+        }
+      ]
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from uuid import uuid4
 
@@ -16,13 +17,12 @@ from chatkit.types import (
     UserMessageTextContent,
     WidgetItem,
 )
-from chatkit.widgets import Card
 from google.adk.events import Event, EventActions
 from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
 from ._client_tool_call import ClientToolCallState
-from ._constants import CHATKIT_THREAD_METADTA_KEY, CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, WIDGET_KEY_IN_TOOL_RESPONSE
+from ._constants import CHATKIT_THREAD_METADTA_KEY, CHATKIT_WIDGET_STATE_KEY, CLIENT_TOOL_KEY_IN_TOOL_RESPONSE
 from ._context import ADKContext
 from ._thread_utils import (
     add_client_tool_status,
@@ -30,6 +30,9 @@ from ._thread_utils import (
     get_thread_metadata_from_state,
     serialize_thread_metadata,
 )
+from ._widgets import serialize_widget_item
+
+_LOGGER = logging.getLogger("adk_chatkit.store")
 
 
 def _to_user_message_content(event: Event) -> list[UserMessageContent]:
@@ -61,30 +64,32 @@ class ADKStore(Store[ADKContext]):
         self._session_service = session_service
 
     async def load_thread(self, thread_id: str, context: ADKContext) -> ThreadMetadata:
+        _LOGGER.info(f"Loading thread {thread_id} for user {context.user_id} in app {context.app_name}")
         session = await self._session_service.get_session(
-            app_name=context["app_name"],
-            user_id=context["user_id"],
+            app_name=context.app_name,
+            user_id=context.user_id,
             session_id=thread_id,
         )
 
         if not session:
             raise ValueError(
-                f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
+                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
             )
 
         return get_thread_metadata_from_state(session.state)
 
     async def save_thread(self, thread: ThreadMetadata, context: ADKContext) -> None:
+        _LOGGER.info(f"Saving thread {thread.id} for user {context.user_id} in app {context.app_name}")
         session = await self._session_service.get_session(
-            app_name=context["app_name"],
-            user_id=context["user_id"],
+            app_name=context.app_name,
+            user_id=context.user_id,
             session_id=thread.id,
         )
 
         if not session:
             session = await self._session_service.create_session(
-                app_name=context["app_name"],
-                user_id=context["user_id"],
+                app_name=context.app_name,
+                user_id=context.user_id,
                 session_id=thread.id,
                 state={CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
             )
@@ -109,15 +114,18 @@ class ADKStore(Store[ADKContext]):
         order: str,
         context: ADKContext,
     ) -> Page[ThreadItem]:
+        _LOGGER.info(
+            f"Loading thread items for thread {thread_id} for user {context.user_id} in app {context.app_name}"
+        )
         session = await self._session_service.get_session(
-            app_name=context["app_name"],
-            user_id=context["user_id"],
+            app_name=context.app_name,
+            user_id=context.user_id,
             session_id=thread_id,
         )
 
         if not session:
             raise ValueError(
-                f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
+                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
             )
 
         thread_items: list[ThreadItem] = []
@@ -151,15 +159,13 @@ class ADKStore(Store[ADKContext]):
                         for fn_response in fn_responses:
                             if not fn_response.response:
                                 continue
-                            # let's check for widget in the response
-                            widget = fn_response.response.get(WIDGET_KEY_IN_TOOL_RESPONSE, None)
-                            if widget:
-                                an_item = WidgetItem(
-                                    id=event.id,
-                                    thread_id=thread_id,
-                                    created_at=datetime.fromtimestamp(event.timestamp),
-                                    widget=Card.model_validate(widget),
-                                )
+
+                            # let's check for widget in the state that corresponds to this function call
+                            widget_state = session.state.get(CHATKIT_WIDGET_STATE_KEY, {})
+                            if fn_response.id in widget_state:
+                                widget_data = widget_state[fn_response.id]
+                                an_item = WidgetItem.model_validate(widget_data)
+
                             # let's check for adk-client-tool in the response
                             adk_client_tool = fn_response.response.get(CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None)
                             if adk_client_tool:
@@ -185,8 +191,39 @@ class ADKStore(Store[ADKContext]):
         return Page(data=thread_items)
 
     async def add_thread_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
-        # items are added to the session by runner
-        pass
+        # items are added to the session by runner except for WidgetItem
+        if not isinstance(item, WidgetItem):
+            return
+
+        _LOGGER.info(f"Adding thread item to thread {thread_id} for user {context.user_id} in app {context.app_name}")
+
+        # the widget item is added in a function call so it's ID has the function call id
+        # we issue a system event to add the widget item in the State keeping the info about which function call added it
+        # so that it is able to be retrieved later and sequenced
+
+        session = await self._session_service.get_session(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            session_id=thread_id,
+        )
+
+        if not session:
+            raise ValueError(
+                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
+            )
+
+        state_delta = {
+            CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
+        }
+
+        actions_with_update = EventActions(state_delta=state_delta)
+        system_event = Event(
+            invocation_id=uuid4().hex,
+            author="system",
+            actions=actions_with_update,
+            timestamp=datetime.now().timestamp(),
+        )
+        await self._session_service.append_event(session, system_event)
 
     async def save_attachment(self, attachment: Attachment, context: ADKContext) -> None:
         raise NotImplementedError()
@@ -198,29 +235,39 @@ class ADKStore(Store[ADKContext]):
         raise NotImplementedError()
 
     async def delete_thread_item(self, thread_id: str, item_id: str, context: ADKContext) -> None:
+        _LOGGER.info(
+            f"Deleting thread item {item_id} from thread {thread_id} for user {context.user_id} in app {context.app_name}"
+        )
         # simply ignoring it for now (ClientToolCallItem is typically not deleted because of this)
         pass
 
     async def delete_thread(self, thread_id: str, context: ADKContext) -> None:
+        _LOGGER.info(f"Deleting thread {thread_id} for user {context.user_id} in app {context.app_name}")
         await self._session_service.delete_session(
-            app_name=context["app_name"], user_id=context["user_id"], session_id=thread_id
+            app_name=context.app_name, user_id=context.user_id, session_id=thread_id
         )
 
     async def save_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
+        _LOGGER.info(
+            f"Saving thread item {item.id} in thread {thread_id} for user {context.user_id} in app {context.app_name}"
+        )
+        if not isinstance(item, (ClientToolCallItem, WidgetItem)):
+            return
+
+        session = await self._session_service.get_session(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            session_id=thread_id,
+        )
+
+        if not session:
+            raise ValueError(
+                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
+            )
+
         # we will only handle specify types of items here
         # as quite many are automatically handled by runner
         if isinstance(item, ClientToolCallItem):
-            session = await self._session_service.get_session(
-                app_name=context["app_name"],
-                user_id=context["user_id"],
-                session_id=thread_id,
-            )
-
-            if not session:
-                raise ValueError(
-                    f"Session with id {thread_id} not found for user {context['user_id']} in app {context['app_name']}"
-                )
-
             thread_metadata = add_client_tool_status(session.state, item.call_id, item.status)
 
             state_delta = {
@@ -236,8 +283,44 @@ class ADKStore(Store[ADKContext]):
             )
             await self._session_service.append_event(session, system_event)
 
+        elif isinstance(item, WidgetItem):
+            # we should update the widget stored state
+            state_delta = {
+                CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
+            }
+
+            actions_with_update = EventActions(state_delta=state_delta)
+            system_event = Event(
+                invocation_id=uuid4().hex,
+                author="system",
+                actions=actions_with_update,
+                timestamp=datetime.now().timestamp(),
+            )
+            await self._session_service.append_event(session, system_event)
+
     async def load_item(self, thread_id: str, item_id: str, context: ADKContext) -> ThreadItem:
-        raise NotImplementedError()
+        _LOGGER.info(
+            f"Loading thread item {item_id} from thread {thread_id} for user {context.user_id} in app {context.app_name}"
+        )
+        session = await self._session_service.get_session(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            session_id=thread_id,
+        )
+
+        if not session:
+            raise ValueError(
+                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
+            )
+
+        # get the widget from the state
+        widget_state = session.state.get(CHATKIT_WIDGET_STATE_KEY, {})
+        if item_id in widget_state:
+            widget_data = widget_state[item_id]
+            widget_item = WidgetItem.model_validate(widget_data)
+            return widget_item
+
+        raise ValueError(f"Item with id {item_id} not found in thread {thread_id}")
 
     async def load_threads(
         self,
@@ -246,9 +329,10 @@ class ADKStore(Store[ADKContext]):
         order: str,
         context: ADKContext,
     ) -> Page[ThreadMetadata]:
+        _LOGGER.info(f"Loading threads for user {context.user_id} in app {context.app_name}")
         sessions_response: ListSessionsResponse = await self._session_service.list_sessions(
-            app_name=context["app_name"],
-            user_id=context["user_id"],
+            app_name=context.app_name,
+            user_id=context.user_id,
         )
 
         items: list[ThreadMetadata] = []

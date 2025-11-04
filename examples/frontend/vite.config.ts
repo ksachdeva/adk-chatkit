@@ -20,6 +20,10 @@ export default defineConfig({
       "/knowledge": {
         target: backendTarget,
         changeOrigin: true,
+      },
+      "/widgets": {
+        target: backendTarget,
+        changeOrigin: true,
       }
     },
     // For production deployments, you need to add your public domains to this list

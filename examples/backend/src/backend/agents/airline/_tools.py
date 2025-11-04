@@ -3,9 +3,7 @@ from google.adk.tools import ToolContext
 from ._state import AirlineAgentContext
 
 
-def get_customer_profile(
-    tool_context: ToolContext,
-) -> str:
+def get_customer_profile(tool_context: ToolContext) -> str:
     """Retrieve the customer's profile.
 
     Returns:
@@ -17,11 +15,7 @@ def get_customer_profile(
     return context.customer_profile.format()
 
 
-def change_seat(
-    flight_number: str,
-    seat: str,
-    tool_context: ToolContext,
-) -> dict[str, str]:
+def change_seat(flight_number: str, seat: str, tool_context: ToolContext) -> dict[str, str]:
     """Move the passenger to a different seat on a flight.
 
     Args:
@@ -45,9 +39,7 @@ def change_seat(
     return {"result": message}
 
 
-def cancel_trip(
-    tool_context: ToolContext,
-) -> dict[str, str]:
+def cancel_trip(tool_context: ToolContext) -> dict[str, str]:
     """Cancel the traveller's upcoming trip and note the refund.
 
     Returns:
@@ -64,9 +56,7 @@ def cancel_trip(
     return {"result": message}
 
 
-def add_checked_bag(
-    tool_context: ToolContext,
-) -> dict[str, str | int]:
+def add_checked_bag(tool_context: ToolContext) -> dict[str, str | int]:
     """Add a checked bag to the reservation.
 
     Returns:
@@ -83,10 +73,7 @@ def add_checked_bag(
     return {"result": message, "bags_checked": context.customer_profile.bags_checked}
 
 
-def set_meal_preference(
-    meal: str,
-    tool_context: ToolContext,
-) -> dict[str, str]:
+def set_meal_preference(meal: str, tool_context: ToolContext) -> dict[str, str]:
     """Record or update the passenger's meal preference.
 
     Args:
@@ -105,10 +92,7 @@ def set_meal_preference(
     return {"result": message}
 
 
-def request_assistance(
-    note: str,
-    tool_context: ToolContext,
-) -> dict[str, str]:
+def request_assistance(note: str, tool_context: ToolContext) -> dict[str, str]:
     """Note a special assistance request for airport staff.
 
     Args:

@@ -1,7 +1,7 @@
 from collections.abc import AsyncIterator
 from typing import Any
 
-from adk_chatkit import ADKContext, ADKStore, stream_agent_response
+from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 from chatkit.server import ChatKitServer
 from chatkit.types import (
     ClientToolCallItem,
@@ -9,9 +9,8 @@ from chatkit.types import (
     ThreadStreamEvent,
     UserMessageItem,
 )
-from google.adk.agents.run_config import RunConfig, StreamingMode
+from google.adk.agents.run_config import StreamingMode
 from google.adk.models.lite_llm import LiteLlm
-from google.adk.sessions import BaseSessionService
 from google.genai import types as genai_types
 
 from backend._config import Settings
@@ -75,12 +74,18 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
             parts=[genai_types.Part.from_text(text=message_text)],
         )
 
-        event_stream = self._runner.run_async(
-            user_id=context["user_id"],
-            session_id=thread.id,
-            new_message=content,
-            run_config=RunConfig(streaming_mode=StreamingMode.SSE),
+        agent_context = ADKAgentContext(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            thread=thread,
         )
 
-        async for event in stream_agent_response(thread, event_stream):
+        event_stream = self._runner.run_async(
+            user_id=context.user_id,
+            session_id=thread.id,
+            new_message=content,
+            run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
+        )
+
+        async for event in stream_agent_response(agent_context, event_stream):
             yield event

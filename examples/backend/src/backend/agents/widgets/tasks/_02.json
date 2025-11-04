@@ -1,0 +1,62 @@
+{
+  "type": "Card",
+  "size": "sm",
+  "children": [
+    {
+      "type": "Row",
+      "children": [
+        {
+          "type": "Button",
+          "label": "Back",
+          "variant": "outline",
+          "iconStart": "chevron-left",
+          "onClickAction": {
+            "type": "nav.back"
+          }
+        },
+        {
+          "type": "Spacer"
+        }
+      ]
+    },
+    {
+      "type": "Divider"
+    },
+    {
+      "type": "Col",
+      "gap": 2,
+      "children": [
+        {
+          "type": "Title",
+          "value": "Choose one",
+          "size": "sm"
+        },
+        {
+          "type": "RadioGroup",
+          "name": "choice",
+          "ariaLabel": "Choose one",
+          "options": [
+            {
+              "label": "Item A",
+              "value": "a"
+            },
+            {
+              "label": "Item B",
+              "value": "b"
+            },
+            {
+              "label": "Item C",
+              "value": "c"
+            }
+          ],
+          "defaultValue": "a",
+          "onChangeAction": {
+            "type": "item.select"
+          },
+          "direction": "col",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

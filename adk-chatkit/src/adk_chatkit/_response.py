@@ -14,25 +14,59 @@ from chatkit.types import (
     ThreadItemUpdated,
     ThreadMetadata,
     ThreadStreamEvent,
-    WidgetItem,
 )
 from google.adk.events import Event
 
 from ._client_tool_call import ClientToolCallState
-from ._constants import CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, WIDGET_KEY_IN_TOOL_RESPONSE
+from ._constants import CLIENT_TOOL_KEY_IN_TOOL_RESPONSE
+from ._context import ADKAgentContext
+from ._event_utils import AsyncQueueIterator, EventWrapper, merge_generators
+
+
+async def _handle_function_response(
+    event: Event,
+    thread: ThreadMetadata,
+) -> AsyncGenerator[ThreadItemDoneEvent, None]:
+    if fn_responses := event.get_function_responses():
+        for fn_response in fn_responses:
+            if not fn_response.response:
+                continue
+
+            adk_client_tool: ClientToolCallState | None = fn_response.response.get(
+                CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None
+            )
+            if adk_client_tool:
+                yield ThreadItemDoneEvent(
+                    item=ClientToolCallItem(
+                        id=event.id,
+                        thread_id=thread.id,
+                        name=adk_client_tool.name,
+                        arguments=adk_client_tool.arguments,
+                        status=adk_client_tool.status,
+                        created_at=datetime.fromtimestamp(event.timestamp),
+                        call_id=adk_client_tool.id,
+                    ),
+                )
 
 
 async def stream_agent_response(
-    thread: ThreadMetadata,
+    context: ADKAgentContext,
     adk_response: AsyncGenerator[Event, None],
 ) -> AsyncIterator[ThreadStreamEvent]:
-    if adk_response is None:
-        return
-
+    queue_iterator = AsyncQueueIterator(context._events)
     response_id = str(uuid.uuid4())
 
+    thread = context.thread
+
     content_index = 0
-    async for event in adk_response:
+    async for event in merge_generators(adk_response, queue_iterator):
+        if event is None:
+            continue
+
+        if isinstance(event, EventWrapper):
+            yield event.event
+            continue
+
         if event.content is None:
             # we need to throw item added event first
             yield ThreadItemAddedEvent(
@@ -53,38 +87,8 @@ async def stream_agent_response(
                 ),
             )
         else:
-            # Since Widgets are recorded in the function responses
-            # they are handled here
-            if fn_responses := event.get_function_responses():
-                for fn_response in fn_responses:
-                    if not fn_response.response:
-                        continue
-                    widget = fn_response.response.get(WIDGET_KEY_IN_TOOL_RESPONSE, None)
-                    if widget:
-                        # No Streaming for Widgets for now
-                        yield ThreadItemDoneEvent(
-                            item=WidgetItem(
-                                id=str(uuid.uuid4()),
-                                thread_id=thread.id,
-                                created_at=datetime.fromtimestamp(event.timestamp),
-                                widget=widget,
-                            )
-                        )
-                    adk_client_tool: ClientToolCallState | None = fn_response.response.get(
-                        CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None
-                    )
-                    if adk_client_tool:
-                        yield ThreadItemDoneEvent(
-                            item=ClientToolCallItem(
-                                id=event.id,
-                                thread_id=thread.id,
-                                name=adk_client_tool.name,
-                                arguments=adk_client_tool.arguments,
-                                status=adk_client_tool.status,
-                                created_at=datetime.fromtimestamp(event.timestamp),
-                                call_id=adk_client_tool.id,
-                            ),
-                        )
+            async for item in _handle_function_response(event, thread):
+                yield item
 
             if event.content.parts:
                 text_from_final_update = ""
@@ -116,3 +120,9 @@ async def stream_agent_response(
                         created_at=datetime.fromtimestamp(event.timestamp),
                     )
                 )
+
+    context._complete()
+
+    # Drain remaining events
+    async for event in queue_iterator:
+        yield event.event

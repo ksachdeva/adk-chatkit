@@ -1,6 +1,8 @@
-from typing import Any, Final, Literal
+from datetime import datetime
+from typing import Any, Final, Literal, cast
 
-from adk_chatkit import ClientToolCallState, add_client_tool_call_to_tool_response, add_widget_to_tool_response
+from adk_chatkit import ChatkitRunConfig, ClientToolCallState, add_client_tool_call_to_tool_response
+from chatkit.types import ProgressUpdateEvent, ThreadItemDoneEvent, ThreadStreamEvent, WidgetItem
 from google.adk.tools import ToolContext
 
 from ._sample_widget import render_weather_widget
@@ -127,9 +129,26 @@ async def get_weather(
     if observed:
         result["observation_time"] = observed
 
-    add_widget_to_tool_response(
-        result,
-        widget,
-    )
+    # add_widget_to_tool_response(
+    #     result,
+    #     widget,
+    # )
+
+    chatkit_run_config = cast(ChatkitRunConfig, tool_context._invocation_context.run_config)
+
+    try:
+        await chatkit_run_config.context.stream(
+            ThreadItemDoneEvent(
+                item=WidgetItem(
+                    id=tool_context.function_call_id,
+                    thread_id=chatkit_run_config.context.thread.id,
+                    created_at=datetime.now(),
+                    widget=widget,
+                )
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        print("[WeatherTool] widget stream failed", {"error": str(exc)})
+        raise ValueError("Weather data is currently unavailable for that location.") from exc
 
     return result
