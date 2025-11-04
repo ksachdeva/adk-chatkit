@@ -1,9 +1,8 @@
 import asyncio
-from datetime import datetime
 from typing import cast
 
 from adk_chatkit import ChatkitRunConfig
-from chatkit.types import ProgressUpdateEvent, ThreadItemDoneEvent, WidgetItem
+from chatkit.types import ProgressUpdateEvent
 from google.adk.tools import ToolContext
 
 from ._tasks_widget import make_widget
@@ -22,19 +21,9 @@ async def render_tasks_widget(tool_context: ToolContext) -> dict[str, str]:
 
     await chatkit_run_config.context.stream(ProgressUpdateEvent(text="Fetching tasks widget..."))
     await asyncio.sleep(2)
-    await chatkit_run_config.context.stream(ProgressUpdateEvent(text=""))
 
     widget = make_widget()
 
-    await chatkit_run_config.context.stream(
-        ThreadItemDoneEvent(
-            item=WidgetItem(
-                id=tool_context.function_call_id,
-                thread_id=chatkit_run_config.context.thread.id,
-                created_at=datetime.now(),
-                widget=widget,
-            )
-        )
-    )
+    await chatkit_run_config.context.stream_widget(widget, tool_context)
 
     return result
