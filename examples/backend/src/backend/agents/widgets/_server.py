@@ -6,14 +6,13 @@ from chatkit.actions import Action
 from chatkit.server import ChatKitServer
 from chatkit.types import (
     ClientToolCallItem,
-    ThreadItemRemovedEvent,
     ThreadItemReplacedEvent,
     ThreadMetadata,
     ThreadStreamEvent,
     UserMessageItem,
     WidgetItem,
 )
-from google.adk.agents.run_config import RunConfig, StreamingMode
+from google.adk.agents.run_config import StreamingMode
 from google.adk.models.lite_llm import LiteLlm
 from google.adk.sessions.base_session_service import BaseSessionService
 from google.genai import types as genai_types

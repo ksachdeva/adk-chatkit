@@ -1,6 +1,5 @@
 from typing import Final
 
-from adk_chatkit import remove_client_tool_calls
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.llm_agent import LlmAgent
 from google.adk.models.lite_llm import LiteLlm
@@ -71,6 +70,5 @@ class FactsAgent(LlmAgent):
                 switch_theme,
             ],
             before_agent_callback=_ensure_context,
-            before_model_callback=remove_client_tool_calls,
             generate_content_config=generate_content_config,
         )

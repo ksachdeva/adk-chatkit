@@ -1,7 +1,7 @@
 from typing import Any
 
 from google.adk.events import Event
-from google.adk.sessions import BaseSessionService, Session
+from google.adk.sessions import Session
 from google.adk.sessions.database_session_service import DatabaseSessionService
 
 

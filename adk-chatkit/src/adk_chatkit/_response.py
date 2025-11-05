@@ -8,45 +8,15 @@ from chatkit.types import (
     AssistantMessageContentPartDone,
     AssistantMessageContentPartTextDelta,
     AssistantMessageItem,
-    ClientToolCallItem,
     ThreadItemAddedEvent,
     ThreadItemDoneEvent,
     ThreadItemUpdated,
-    ThreadMetadata,
     ThreadStreamEvent,
 )
 from google.adk.events import Event
 
-from ._client_tool_call import ClientToolCallState
-from ._constants import CLIENT_TOOL_KEY_IN_TOOL_RESPONSE
 from ._context import ADKAgentContext
 from ._event_utils import AsyncQueueIterator, EventWrapper, merge_generators
-
-
-async def _handle_function_response(
-    event: Event,
-    thread: ThreadMetadata,
-) -> AsyncGenerator[ThreadItemDoneEvent, None]:
-    if fn_responses := event.get_function_responses():
-        for fn_response in fn_responses:
-            if not fn_response.response:
-                continue
-
-            adk_client_tool: ClientToolCallState | None = fn_response.response.get(
-                CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None
-            )
-            if adk_client_tool:
-                yield ThreadItemDoneEvent(
-                    item=ClientToolCallItem(
-                        id=event.id,
-                        thread_id=thread.id,
-                        name=adk_client_tool.name,
-                        arguments=adk_client_tool.arguments,
-                        status=adk_client_tool.status,
-                        created_at=datetime.fromtimestamp(event.timestamp),
-                        call_id=adk_client_tool.id,
-                    ),
-                )
 
 
 async def stream_agent_response(
@@ -87,9 +57,6 @@ async def stream_agent_response(
                 ),
             )
         else:
-            async for item in _handle_function_response(event, thread):
-                yield item
-
             if event.content.parts:
                 text_from_final_update = ""
                 for p in event.content.parts:
@@ -126,3 +93,7 @@ async def stream_agent_response(
     # Drain remaining events
     async for event in queue_iterator:
         yield event.event
+
+    # the last chatkit event is that of the client call
+    if context.client_tool_call:
+        yield ThreadItemDoneEvent(item=context.client_tool_call)

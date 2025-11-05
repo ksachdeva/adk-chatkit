@@ -21,12 +21,10 @@ from google.adk.events import Event, EventActions
 from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
-from ._client_tool_call import ClientToolCallState
-from ._constants import CHATKIT_THREAD_METADTA_KEY, CHATKIT_WIDGET_STATE_KEY, CLIENT_TOOL_KEY_IN_TOOL_RESPONSE
+from ._client_tool_call import serialize_client_tool_call_item
+from ._constants import CHATKIT_CLIENT_TOOL_CALLS_KEY, CHATKIT_THREAD_METADTA_KEY, CHATKIT_WIDGET_STATE_KEY
 from ._context import ADKContext
 from ._thread_utils import (
-    add_client_tool_status,
-    get_client_tool_status,
     get_thread_metadata_from_state,
     serialize_thread_metadata,
 )
@@ -167,23 +165,10 @@ class ADKStore(Store[ADKContext]):
                                 an_item = WidgetItem.model_validate(widget_data)
 
                             # let's check for adk-client-tool in the response
-                            adk_client_tool = fn_response.response.get(CLIENT_TOOL_KEY_IN_TOOL_RESPONSE, None)
-                            if adk_client_tool:
-                                adk_client_tool = ClientToolCallState.model_validate(adk_client_tool)
-                                status = get_client_tool_status(
-                                    session.state,
-                                    adk_client_tool.id,
-                                )
-                                if status:
-                                    an_item = ClientToolCallItem(
-                                        id=event.id,
-                                        thread_id=thread_id,
-                                        name=adk_client_tool.name,
-                                        arguments=adk_client_tool.arguments,
-                                        status=status,  # type: ignore
-                                        created_at=datetime.fromtimestamp(event.timestamp),
-                                        call_id=adk_client_tool.id,
-                                    )
+                            adk_client_tool = session.state.get(CHATKIT_CLIENT_TOOL_CALLS_KEY, {})
+                            if fn_response.id in adk_client_tool:
+                                client_tool_data = adk_client_tool[fn_response.id]
+                                an_item = ClientToolCallItem.model_validate(client_tool_data)
 
             if an_item:
                 thread_items.append(an_item)
@@ -191,11 +176,12 @@ class ADKStore(Store[ADKContext]):
         return Page(data=thread_items)
 
     async def add_thread_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
-        # items are added to the session by runner except for WidgetItem
-        if not isinstance(item, WidgetItem):
+        if not isinstance(item, (ClientToolCallItem, WidgetItem)):
             return
 
         _LOGGER.info(f"Adding thread item to thread {thread_id} for user {context.user_id} in app {context.app_name}")
+
+        print(item)
 
         # the widget item is added in a function call so it's ID has the function call id
         # we issue a system event to add the widget item in the State keeping the info about which function call added it
@@ -212,9 +198,14 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
             )
 
-        state_delta = {
-            CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
-        }
+        if isinstance(item, ClientToolCallItem):
+            state_delta = {
+                CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
+            }
+        elif isinstance(item, WidgetItem):
+            state_delta = {
+                CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
+            }
 
         actions_with_update = EventActions(state_delta=state_delta)
         system_event = Event(
@@ -265,38 +256,24 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
             )
 
-        # we will only handle specify types of items here
-        # as quite many are automatically handled by runner
         if isinstance(item, ClientToolCallItem):
-            thread_metadata = add_client_tool_status(session.state, item.call_id, item.status)
-
             state_delta = {
-                CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread_metadata),
+                CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
             }
-
-            actions_with_update = EventActions(state_delta=state_delta)
-            system_event = Event(
-                invocation_id=uuid4().hex,
-                author="system",
-                actions=actions_with_update,
-                timestamp=datetime.now().timestamp(),
-            )
-            await self._session_service.append_event(session, system_event)
-
         elif isinstance(item, WidgetItem):
-            # we should update the widget stored state
             state_delta = {
                 CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
             }
 
-            actions_with_update = EventActions(state_delta=state_delta)
-            system_event = Event(
-                invocation_id=uuid4().hex,
-                author="system",
-                actions=actions_with_update,
-                timestamp=datetime.now().timestamp(),
-            )
-            await self._session_service.append_event(session, system_event)
+        actions_with_update = EventActions(state_delta=state_delta)
+        system_event = Event(
+            invocation_id=uuid4().hex,
+            author="system",
+            actions=actions_with_update,
+            timestamp=datetime.now().timestamp(),
+        )
+
+        await self._session_service.append_event(session, system_event)
 
     async def load_item(self, thread_id: str, item_id: str, context: ADKContext) -> ThreadItem:
         _LOGGER.info(
