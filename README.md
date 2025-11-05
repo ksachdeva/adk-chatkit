@@ -31,7 +31,7 @@ Make sure you open this repository in vscode `devcontainer` and all dependencies
 cp .env.example .env
 ```
 
-There is one backend and one frontend that hosts 3 agents (chatkit servers) and their corresponding user interface.
+There is one backend and one frontend that hosts 4 agents (chatkit servers) and their corresponding user interface.
 
 ```bash
 # Run the backend

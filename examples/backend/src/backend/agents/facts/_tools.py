@@ -1,6 +1,6 @@
-from typing import Any, Final, Literal, cast
+from typing import Any, Final, Literal
 
-from adk_chatkit import ChatkitRunConfig, ClientToolCallState
+from adk_chatkit import ClientToolCallState, issue_client_tool_call, stream_widget
 from google.adk.tools import ToolContext
 
 from ._sample_widget import render_weather_widget
@@ -50,9 +50,7 @@ async def save_fact(
 
     result = {"fact_id": confirmed.id, "status": "saved"}
 
-    # add_client_tool_call_to_tool_response(result, client_tool_call, tool_context)
-    chatkit_run_config = cast(ChatkitRunConfig, tool_context._invocation_context.run_config)
-    await chatkit_run_config.context.issue_client_tool_call(client_tool_call, tool_context)
+    await issue_client_tool_call(client_tool_call, tool_context)
 
     return result
 
@@ -75,9 +73,7 @@ async def switch_theme(theme: str, tool_context: ToolContext) -> dict[str, str]:
 
     result = {"theme": requested}
 
-    # add_client_tool_call_to_tool_response(result, client_tool_call, tool_context)
-    chatkit_run_config = cast(ChatkitRunConfig, tool_context._invocation_context.run_config)
-    await chatkit_run_config.context.issue_client_tool_call(client_tool_call, tool_context)
+    await issue_client_tool_call(client_tool_call, tool_context)
 
     return result
 
@@ -131,10 +127,8 @@ async def get_weather(
     if observed:
         result["observation_time"] = observed
 
-    chatkit_run_config = cast(ChatkitRunConfig, tool_context._invocation_context.run_config)
-
     try:
-        await chatkit_run_config.context.stream_widget(widget, tool_context)
+        await stream_widget(widget, tool_context)
     except Exception as exc:  # noqa: BLE001
         print("[WeatherTool] widget stream failed", {"error": str(exc)})
         raise ValueError("Weather data is currently unavailable for that location.") from exc

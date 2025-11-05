@@ -1,6 +1,6 @@
 [project]
 name = "adk-chatkit"
-version = "0.0.4"
+version = "0.0.5"
 description = "OpenAI chatkit backend support for Google ADK"
 readme = "README.md"
 authors = [

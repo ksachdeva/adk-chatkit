@@ -63,3 +63,48 @@ class ADKAgentContext(ADKContext):
 
 class ChatkitRunConfig(RunConfig):
     context: ADKAgentContext
+
+
+async def stream_event(event: ThreadStreamEvent, tool_context: ToolContext) -> None:
+    """Stream an event to the chat interface.
+
+    Args:
+        event: The event to stream.
+        tool_context: The tool context associated with the event.
+    """
+    chatkit_run_config = tool_context._invocation_context.run_config
+    if not isinstance(chatkit_run_config, ChatkitRunConfig):
+        raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
+
+    await chatkit_run_config.context.stream(event)
+
+
+async def stream_widget(widget: WidgetRoot, tool_context: ToolContext) -> None:
+    """Stream a widget to the chat interface.
+
+    Args:
+        widget: The widget to stream.
+        tool_context: The tool context associated with the widget.
+    """
+    chatkit_run_config = tool_context._invocation_context.run_config
+    if not isinstance(chatkit_run_config, ChatkitRunConfig):
+        raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
+
+    await chatkit_run_config.context.stream_widget(widget, tool_context)
+
+
+async def issue_client_tool_call(
+    client_tool_call: ClientToolCallState,
+    tool_context: ToolContext,
+) -> None:
+    """Issue a client tool call to the chat interface.
+
+    Args:
+        client_tool_call: The client tool call state to issue.
+        tool_context: The tool context associated with the client tool call.
+    """
+    chatkit_run_config = tool_context._invocation_context.run_config
+    if not isinstance(chatkit_run_config, ChatkitRunConfig):
+        raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
+
+    await chatkit_run_config.context.issue_client_tool_call(client_tool_call, tool_context)

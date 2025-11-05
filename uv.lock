@@ -35,7 +35,7 @@ wheels = [
 
 [[package]]
 name = "adk-chatkit"
-version = "0.0.3"
+version = "0.0.5"
 source = { editable = "adk-chatkit" }
 dependencies = [
     { name = "google-adk" },
