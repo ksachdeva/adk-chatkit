@@ -11,7 +11,6 @@ It uses and extends `openai/chatkit-python` (https://github.com/openai/chatkit-p
 - Provides support for making calls to client tools.
     * Client tools typically run in browser
     * See examples/backend/src/backend/agents/facts/_tools.py::switch_theme
-    * Use `add_client_tool_call_to_tool_response` in you tool
 
 TODO:
 - Support for attachments / artifacts
@@ -99,7 +98,7 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
 
 ## Examples applications
 
-There are 3 applications (ported from https://github.com/openai/openai-chatkit-advanced-samples)
+There are 4 example applications (3 are ported from https://github.com/openai/openai-chatkit-advanced-samples)
 
 ### Facts & Guide
 
@@ -130,3 +129,9 @@ http://localhost:5171/customer-support
 http://localhost:5171/knowledge
 
 ![Knowledge preview](assets/knowledge.png)
+
+### Widget Gallery
+
+- Shows various widgets and how to process actions
+
+![Knowledge preview](assets/widgets.png)
