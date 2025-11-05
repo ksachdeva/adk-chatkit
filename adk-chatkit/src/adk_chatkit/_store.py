@@ -181,8 +181,6 @@ class ADKStore(Store[ADKContext]):
 
         _LOGGER.info(f"Adding thread item to thread {thread_id} for user {context.user_id} in app {context.app_name}")
 
-        print(item)
-
         # the widget item is added in a function call so it's ID has the function call id
         # we issue a system event to add the widget item in the State keeping the info about which function call added it
         # so that it is able to be retrieved later and sequenced
