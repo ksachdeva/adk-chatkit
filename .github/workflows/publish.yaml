@@ -35,7 +35,9 @@ jobs:
         with:
           imageName: ghcr.io/ksachdeva/adk-chatkit
           cacheFrom: ghcr.io/ksachdeva/adk-chatkit
-          runCmd: uv build --package adk-chatkit
+          runCmd: |
+            cp README.md adk-chatkit/README.md
+            uv build --package adk-chatkit
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
