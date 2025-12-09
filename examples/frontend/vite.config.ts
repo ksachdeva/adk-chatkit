@@ -24,6 +24,10 @@ export default defineConfig({
       "/widgets": {
         target: backendTarget,
         changeOrigin: true,
+      },
+      "/cat": {
+        target: backendTarget,
+        changeOrigin: true,
       }
     },
     // For production deployments, you need to add your public domains to this list

@@ -10,6 +10,7 @@ from ._config import SessionStorageType, Settings
 from ._refreshed_session_service import RefreshedSessionService
 from ._runner_manager import RunnerManager
 from .agents.airline import AirlineSupportChatkitServer
+from .agents.cat import CatChatkitServer
 from .agents.facts import FactsChatkitServer
 from .agents.knowledge import KnowledgeAssistantChatkitServer, make_vector_store
 from .agents.widgets import WidgetsChatkitServer
@@ -64,6 +65,10 @@ def get_providers() -> list[BaseProvider]:
     widget_server_provider.from_context(Settings)
     widget_server_provider.provide(WidgetsChatkitServer)
 
+    cat_server_provider = Provider(scope=Scope.APP)
+    cat_server_provider.from_context(Settings)
+    cat_server_provider.provide(CatChatkitServer)
+
     return [
         runner_provider,
         SessionServiceProvider(),
@@ -73,4 +78,5 @@ def get_providers() -> list[BaseProvider]:
         facts_server_provider,
         knowledge_server_provider,
         widget_server_provider,
+        cat_server_provider,
     ]
