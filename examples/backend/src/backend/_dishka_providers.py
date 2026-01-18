@@ -7,7 +7,6 @@ from google.adk.sessions.in_memory_session_service import InMemorySessionService
 from langchain_core.vectorstores import VectorStore
 
 from ._config import SessionStorageType, Settings
-from ._refreshed_session_service import RefreshedSessionService
 from ._runner_manager import RunnerManager
 from .agents.airline import AirlineSupportChatkitServer
 from .agents.facts import FactsChatkitServer
@@ -23,7 +22,7 @@ class SessionServiceProvider(Provider):
     @provide
     async def get_service(self, settings: Settings) -> BaseSessionService:
         if settings.SESSION_STORAGE_TYPE == SessionStorageType.db:
-            return RefreshedSessionService(settings.ADK_DATABASE_URL)  # type: ignore
+            return DatabaseSessionService(settings.ADK_DATABASE_URL)  # type: ignore
 
         return InMemorySessionService()  # type: ignore
 

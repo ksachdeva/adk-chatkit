@@ -1,5 +1,5 @@
 from collections.abc import AsyncIterator
-from typing import Any
+from typing import Any, cast
 
 from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 from chatkit.actions import Action
@@ -96,6 +96,10 @@ class WidgetsChatkitServer(ChatKitServer[ADKContext]):
 
         async for event in stream_agent_response(enhanced_context, event_stream):
             yield event
+
+        # update session service for any pending items here
+        adk_store = cast(ADKStore, self.store)
+        await adk_store.issue_system_event_updates(thread_id=thread.id, context=context)
 
     async def action(
         self,

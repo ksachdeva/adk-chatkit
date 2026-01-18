@@ -2,7 +2,7 @@ import re
 from collections.abc import AsyncIterator
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any, Iterable, cast
 
 from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, stream_agent_response
 from chatkit.server import ChatKitServer
@@ -222,3 +222,7 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
 
         async for event in stream_agent_response(agent_context, event_stream):
             yield event
+
+        # update session service for any pending items here
+        adk_store = cast(ADKStore, self.store)
+        await adk_store.issue_system_event_updates(thread_id=thread.id, context=context)

@@ -60,6 +60,7 @@ def _to_assistant_message_content(event: Event) -> list[AssistantMessageContent]
 class ADKStore(Store[ADKContext]):
     def __init__(self, session_service: BaseSessionService) -> None:
         self._session_service = session_service
+        self._pending_items: dict[str, list[ThreadItem]] = {}
 
     async def load_thread(self, thread_id: str, context: ADKContext) -> ThreadMetadata:
         _LOGGER.info(f"Loading thread {thread_id} for user {context.user_id} in app {context.app_name}")
@@ -78,6 +79,9 @@ class ADKStore(Store[ADKContext]):
 
     async def save_thread(self, thread: ThreadMetadata, context: ADKContext) -> None:
         _LOGGER.info(f"Saving thread {thread.id} for user {context.user_id} in app {context.app_name}")
+
+        timestamp = datetime.now().timestamp()
+
         session = await self._session_service.get_session(
             app_name=context.app_name,
             user_id=context.user_id,
@@ -100,7 +104,7 @@ class ADKStore(Store[ADKContext]):
                 invocation_id=uuid4().hex,
                 author="system",
                 actions=actions_with_update,
-                timestamp=datetime.now().timestamp(),
+                timestamp=timestamp,
             )
             await self._session_service.append_event(session, system_event)
 
@@ -175,6 +179,51 @@ class ADKStore(Store[ADKContext]):
 
         return Page(data=thread_items)
 
+    async def issue_system_event_updates(self, thread_id: str, context: ADKContext) -> None:
+        thread_items = self._pending_items.pop(thread_id, None)
+
+        if thread_items is None:
+            _LOGGER.info(
+                f"No pending items found for thread {thread_id} for user {context.user_id} in app {context.app_name}"
+            )
+            return
+
+        for item in thread_items:
+            timestamp = datetime.now().timestamp()
+
+            formatted_timestamp = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+            print("[add_thread_item]Formatted timestamp for adding thread item:", formatted_timestamp)
+
+            session = await self._session_service.get_session(
+                app_name=context.app_name,
+                user_id=context.user_id,
+                session_id=thread_id,
+            )
+
+            if not session:
+                raise ValueError(
+                    f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
+                )
+
+            if isinstance(item, ClientToolCallItem):
+                state_delta = {
+                    CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
+                }
+            elif isinstance(item, WidgetItem):
+                state_delta = {
+                    CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
+                }
+
+            actions_with_update = EventActions(state_delta=state_delta)
+            system_event = Event(
+                invocation_id=uuid4().hex,
+                author="system",
+                actions=actions_with_update,
+                timestamp=timestamp,
+            )
+            _LOGGER.info(f"Appending system event to session {session.id} for adding thread item {item.id}")
+            await self._session_service.append_event(session, system_event)
+
     async def add_thread_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
         if not isinstance(item, (ClientToolCallItem, WidgetItem)):
             return
@@ -185,35 +234,7 @@ class ADKStore(Store[ADKContext]):
         # we issue a system event to add the widget item in the State keeping the info about which function call added it
         # so that it is able to be retrieved later and sequenced
 
-        session = await self._session_service.get_session(
-            app_name=context.app_name,
-            user_id=context.user_id,
-            session_id=thread_id,
-        )
-
-        if not session:
-            raise ValueError(
-                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
-            )
-
-        if isinstance(item, ClientToolCallItem):
-            state_delta = {
-                CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
-            }
-        elif isinstance(item, WidgetItem):
-            state_delta = {
-                CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
-            }
-
-        actions_with_update = EventActions(state_delta=state_delta)
-        system_event = Event(
-            invocation_id=uuid4().hex,
-            author="system",
-            actions=actions_with_update,
-            timestamp=datetime.now().timestamp(),
-        )
-        _LOGGER.info(f"Appending system event to session {session.id} for adding thread item {item.id}")
-        await self._session_service.append_event(session, system_event)
+        self._pending_items.setdefault(thread_id, []).append(item)
 
     async def save_attachment(self, attachment: Attachment, context: ADKContext) -> None:
         raise NotImplementedError()
@@ -244,35 +265,7 @@ class ADKStore(Store[ADKContext]):
         if not isinstance(item, (ClientToolCallItem, WidgetItem)):
             return
 
-        session = await self._session_service.get_session(
-            app_name=context.app_name,
-            user_id=context.user_id,
-            session_id=thread_id,
-        )
-
-        if not session:
-            raise ValueError(
-                f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
-            )
-
-        if isinstance(item, ClientToolCallItem):
-            state_delta = {
-                CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
-            }
-        elif isinstance(item, WidgetItem):
-            state_delta = {
-                CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
-            }
-
-        actions_with_update = EventActions(state_delta=state_delta)
-        system_event = Event(
-            invocation_id=uuid4().hex,
-            author="system",
-            actions=actions_with_update,
-            timestamp=datetime.now().timestamp(),
-        )
-
-        await self._session_service.append_event(session, system_event)
+        self._pending_items.setdefault(thread_id, []).append(item)
 
     async def load_item(self, thread_id: str, item_id: str, context: ADKContext) -> ThreadItem:
         _LOGGER.info(
