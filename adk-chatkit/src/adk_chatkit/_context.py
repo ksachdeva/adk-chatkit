@@ -4,7 +4,7 @@ from datetime import datetime
 from chatkit.types import ClientToolCallItem, ThreadItemDoneEvent, ThreadMetadata, ThreadStreamEvent, WidgetItem
 from chatkit.widgets import WidgetRoot
 from google.adk.agents.run_config import RunConfig
-from google.adk.tools import ToolContext
+from google.adk.tools.tool_context import ToolContext
 from pydantic import BaseModel
 
 from ._client_tool_call import ClientToolCallState
