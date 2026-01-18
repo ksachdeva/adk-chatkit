@@ -73,11 +73,13 @@
     // ts-node
     "ghcr.io/devcontainers-extra/features/ts-node:1": {},
     // Modern shell utils
-    "ghcr.io/mikaello/devcontainer-features/modern-shell-utils:1": {},
+    "ghcr.io/mikaello/devcontainer-features/modern-shell-utils:2.0.0": {},
     // uv
     "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
     // docker-in-docker
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    }
   },
   "mounts": [
     "source=devcontainer-zshhistory,target=/commandhistory,type=volume"
