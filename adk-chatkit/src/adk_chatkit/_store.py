@@ -212,6 +212,7 @@ class ADKStore(Store[ADKContext]):
             actions=actions_with_update,
             timestamp=datetime.now().timestamp(),
         )
+        _LOGGER.info(f"Appending system event to session {session.id} for adding thread item {item.id}")
         await self._session_service.append_event(session, system_event)
 
     async def save_attachment(self, attachment: Attachment, context: ADKContext) -> None:

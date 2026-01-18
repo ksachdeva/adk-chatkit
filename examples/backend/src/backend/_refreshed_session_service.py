@@ -1,8 +1,11 @@
+import logging
 from typing import Any
 
 from google.adk.events import Event
 from google.adk.sessions import Session
 from google.adk.sessions.database_session_service import DatabaseSessionService
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class RefreshedSessionService(DatabaseSessionService):
@@ -11,12 +14,14 @@ class RefreshedSessionService(DatabaseSessionService):
 
     async def append_event(self, session: Session, event: Event) -> Event:
         """Append event with session refresh to prevent stale session errors."""
+        _LOGGER.info("Appending event to session %s", session.id)
         # Refresh the session before appending to get the latest state
         refreshed_session = await self.get_session(
             app_name=session.app_name, user_id=session.user_id, session_id=session.id
         )
 
         if refreshed_session:
+            _LOGGER.info("Session %s refreshed before appending event ", session.id)
             session.last_update_time = refreshed_session.last_update_time
             session.events = refreshed_session.events
             session.state = refreshed_session.state
