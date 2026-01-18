@@ -8,10 +8,10 @@ from langchain_core.vectorstores import VectorStore
 
 from ._config import SessionStorageType, Settings
 from ._runner_manager import RunnerManager
-from .agents.airline import AirlineSupportChatkitServer
-from .agents.facts import FactsChatkitServer
-from .agents.knowledge import KnowledgeAssistantChatkitServer, make_vector_store
-from .agents.widgets import WidgetsChatkitServer
+from .agents.airline import AirlineSupportChatKitServer
+from .agents.facts import FactsChatKitServer
+from .agents.knowledge import KnowledgeAssistantChatKitServer, make_vector_store
+from .agents.widgets import WidgetsChatKitServer
 
 
 class SessionServiceProvider(Provider):
@@ -49,19 +49,19 @@ def get_providers() -> list[BaseProvider]:
 
     airline_support_server_provider = Provider(scope=Scope.APP)
     airline_support_server_provider.from_context(Settings)
-    airline_support_server_provider.provide(AirlineSupportChatkitServer)
+    airline_support_server_provider.provide(AirlineSupportChatKitServer)
 
     facts_server_provider = Provider(scope=Scope.APP)
     facts_server_provider.from_context(Settings)
-    facts_server_provider.provide(FactsChatkitServer)
+    facts_server_provider.provide(FactsChatKitServer)
 
     knowledge_server_provider = Provider(scope=Scope.APP)
     knowledge_server_provider.from_context(Settings)
-    knowledge_server_provider.provide(KnowledgeAssistantChatkitServer)
+    knowledge_server_provider.provide(KnowledgeAssistantChatKitServer)
 
     widget_server_provider = Provider(scope=Scope.APP)
     widget_server_provider.from_context(Settings)
-    widget_server_provider.provide(WidgetsChatkitServer)
+    widget_server_provider.provide(WidgetsChatKitServer)
 
     return [
         runner_provider,

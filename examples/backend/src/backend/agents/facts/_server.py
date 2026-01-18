@@ -1,8 +1,7 @@
 from collections.abc import AsyncIterator
-from typing import Any, cast
+from typing import Any
 
-from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
-from chatkit.server import ChatKitServer
+from adk_chatkit import ADKAgentContext, ADKChatKitServer, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 from chatkit.types import (
     ClientToolCallItem,
     ThreadMetadata,
@@ -42,7 +41,7 @@ def _is_tool_completion_item(item: Any) -> bool:
     return isinstance(item, ClientToolCallItem)
 
 
-class FactsChatkitServer(ChatKitServer[ADKContext]):
+class FactsChatKitServer(ADKChatKitServer):
     def __init__(
         self,
         store: ADKStore,
@@ -53,7 +52,7 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
         agent = _make_facts_agent(settings)
         self._runner = runner_manager.add_runner(settings.FACTS_APP_NAME, agent)
 
-    async def respond(
+    async def _adk_respond(
         self,
         thread: ThreadMetadata,
         item: UserMessageItem | None,
@@ -89,7 +88,3 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
 
         async for event in stream_agent_response(agent_context, event_stream):
             yield event
-
-        # update session service for any pending items here
-        adk_store = cast(ADKStore, self.store)
-        await adk_store.issue_system_event_updates(thread_id=thread.id, context=context)

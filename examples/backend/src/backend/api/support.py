@@ -12,7 +12,7 @@ from google.adk.sessions.base_session_service import BaseSessionService
 from starlette.responses import JSONResponse
 
 from backend._config import Settings
-from backend.agents.airline import AirlineAgentContext, AirlineSupportChatkitServer
+from backend.agents.airline import AirlineAgentContext, AirlineSupportChatKitServer
 
 router = APIRouter(route_class=DishkaRoute)
 
@@ -21,7 +21,7 @@ router = APIRouter(route_class=DishkaRoute)
 async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
-    request_server: FromDishka[AirlineSupportChatkitServer],
+    request_server: FromDishka[AirlineSupportChatKitServer],
 ) -> Response:
     payload = await request.body()
     print("Received payload:", payload)

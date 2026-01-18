@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, Response, StreamingResponse
 from starlette.responses import JSONResponse
 
 from backend._config import Settings
-from backend.agents.knowledge import DOCUMENTS, DOCUMENTS_BY_ID, KnowledgeAssistantChatkitServer, as_dicts
+from backend.agents.knowledge import DOCUMENTS, DOCUMENTS_BY_ID, KnowledgeAssistantChatKitServer, as_dicts
 
 router = APIRouter(route_class=DishkaRoute)
 
@@ -21,7 +21,7 @@ router = APIRouter(route_class=DishkaRoute)
 async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
-    request_server: FromDishka[KnowledgeAssistantChatkitServer],
+    request_server: FromDishka[KnowledgeAssistantChatKitServer],
 ) -> Response:
     payload = await request.body()
     print("Received payload:", payload)
@@ -78,7 +78,7 @@ async def document_file(
 async def thread_citations(
     thread_id: str,
     settings: FromDishka[Settings],
-    request_server: FromDishka[KnowledgeAssistantChatkitServer],
+    request_server: FromDishka[KnowledgeAssistantChatKitServer],
 ) -> dict[str, Any]:
     user_id = "ksachdeva-1"
     context = ADKContext(user_id=user_id, app_name=settings.KNOWLEDGE_APP_NAME)

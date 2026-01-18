@@ -1,5 +1,5 @@
 from ._agent import FactsAgent
-from ._server import FactsChatkitServer
+from ._server import FactsChatKitServer
 from ._state import FactContext
 
-__all__ = ["FactsAgent", "FactContext", "FactsChatkitServer"]
+__all__ = ["FactsAgent", "FactContext", "FactsChatKitServer"]

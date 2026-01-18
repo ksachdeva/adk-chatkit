@@ -2,10 +2,9 @@ import re
 from collections.abc import AsyncIterator
 from itertools import chain
 from pathlib import Path
-from typing import Any, Iterable, cast
+from typing import Any, Iterable
 
-from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, stream_agent_response
-from chatkit.server import ChatKitServer
+from adk_chatkit import ADKAgentContext, ADKChatKitServer, ADKContext, ADKStore, stream_agent_response
 from chatkit.types import (
     Annotation,
     AssistantMessageContent,
@@ -150,7 +149,7 @@ def _extract_citations(item: AssistantMessageItem) -> Iterable[dict[str, Any]]:
                 }
 
 
-class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
+class KnowledgeAssistantChatKitServer(ADKChatKitServer):
     def __init__(
         self,
         store: ADKStore,
@@ -186,7 +185,7 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
                     return citations
         return []
 
-    async def respond(
+    async def _adk_respond(
         self,
         thread: ThreadMetadata,
         item: UserMessageItem | None,
@@ -222,7 +221,3 @@ class KnowledgeAssistantChatkitServer(ChatKitServer[ADKContext]):
 
         async for event in stream_agent_response(agent_context, event_stream):
             yield event
-
-        # update session service for any pending items here
-        adk_store = cast(ADKStore, self.store)
-        await adk_store.issue_system_event_updates(thread_id=thread.id, context=context)

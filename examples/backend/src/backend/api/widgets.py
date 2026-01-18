@@ -9,7 +9,7 @@ from fastapi.responses import Response, StreamingResponse
 from starlette.responses import JSONResponse
 
 from backend._config import Settings
-from backend.agents.widgets import WidgetsChatkitServer
+from backend.agents.widgets import WidgetsChatKitServer
 
 router = APIRouter(route_class=DishkaRoute)
 
@@ -18,7 +18,7 @@ router = APIRouter(route_class=DishkaRoute)
 async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
-    request_server: FromDishka[WidgetsChatkitServer],
+    request_server: FromDishka[WidgetsChatKitServer],
 ) -> Response:
     payload = await request.body()
     print("Received payload:", payload)

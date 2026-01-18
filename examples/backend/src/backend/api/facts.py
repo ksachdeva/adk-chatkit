@@ -1,18 +1,15 @@
-from typing import Any
-
 from adk_chatkit import ADKContext
 from chatkit.server import StreamingResult
 from dishka.integrations.fastapi import (
     DishkaRoute,
     FromDishka,
 )
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import Response, StreamingResponse
-from google.adk.sessions.base_session_service import BaseSessionService
 from starlette.responses import JSONResponse
 
 from backend._config import Settings
-from backend.agents.facts import FactContext, FactsChatkitServer
+from backend.agents.facts import FactsChatKitServer
 
 router = APIRouter(route_class=DishkaRoute)
 
@@ -21,7 +18,7 @@ router = APIRouter(route_class=DishkaRoute)
 async def chatkit_endpoint(
     request: Request,
     settings: FromDishka[Settings],
-    request_server: FromDishka[FactsChatkitServer],
+    request_server: FromDishka[FactsChatKitServer],
 ) -> Response:
     payload = await request.body()
     print("Received payload:", payload)
