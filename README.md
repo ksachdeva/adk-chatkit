@@ -49,9 +49,7 @@ See `examples` for full usage
 
 ```python
 
-from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
-
-class FactsChatkitServer(ChatKitServer[ADKContext]):
+class FactsChatKitServer(ADKChatKitServer):
     def __init__(
         self,
         store: ADKStore,
@@ -62,7 +60,7 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
         agent = _make_facts_agent(settings)
         self._runner = runner_manager.add_runner(settings.FACTS_APP_NAME, agent)
 
-    async def respond(
+    async def _adk_respond(
         self,
         thread: ThreadMetadata,
         item: UserMessageItem | None,
@@ -77,6 +75,11 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
         message_text = _user_message_text(item)
         if not message_text:
             return
+
+        content = genai_types.Content(
+            role="user",
+            parts=[genai_types.Part.from_text(text=message_text)],
+        )
 
         agent_context = ADKAgentContext(
             app_name=context.app_name,
@@ -93,6 +96,7 @@ class FactsChatkitServer(ChatKitServer[ADKContext]):
 
         async for event in stream_agent_response(agent_context, event_stream):
             yield event
+
 
 ```
 
