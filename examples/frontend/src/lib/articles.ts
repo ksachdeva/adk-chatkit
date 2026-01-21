@@ -8,6 +8,7 @@ export type Article = {
   category: string;
   tags?: string[];
   emoji: string;
+  heroImageUrl?: string;
 };
 
 type ArticlesResponse = {

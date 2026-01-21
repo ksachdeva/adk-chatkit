@@ -193,7 +193,15 @@ function FeaturedArticleCard({ article, onClick }: FeaturedArticleCardProps) {
           )}
         </div>
         <div className="flex items-center justify-center">
-          <div className="text-6xl opacity-20">{article.emoji}</div>
+          {article.heroImageUrl ? (
+            <img
+              src={article.heroImageUrl}
+              alt={article.title}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="text-6xl opacity-20">{article.emoji}</div>
+          )}
         </div>
       </div>
     </button>
@@ -218,7 +226,15 @@ function SecondaryArticleCard({ article, onClick }: SecondaryArticleCardProps) {
       className="group flex cursor-pointer flex-col overflow-hidden rounded-sm bg-neutral-50 text-left transition-colors hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700"
     >
       <div className="flex h-32 items-center justify-center bg-neutral-100 dark:bg-neutral-700">
-        <div className="text-5xl opacity-30">{article.emoji}</div>
+        {article.heroImageUrl ? (
+          <img
+            src={article.heroImageUrl}
+            alt={article.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="text-5xl opacity-30">{article.emoji}</div>
+        )}
       </div>
       <div className="flex flex-1 flex-col p-6">
         <div className="mb-2 flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
