@@ -78,6 +78,7 @@ class Settings(BaseSettings):
     KNOWLEDGE_APP_NAME: str = "knowledge"
     WIDGETS_APP_NAME: str = "widgets"
     CAT_APP_NAME: str = "cat"
+    NEWS_APP_NAME: str = "news"
 
     DATA_DIR: Path
 
