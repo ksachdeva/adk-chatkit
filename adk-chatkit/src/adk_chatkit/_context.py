@@ -1,7 +1,14 @@
 import asyncio
 from datetime import datetime
 
-from chatkit.types import ClientToolCallItem, ThreadItemDoneEvent, ThreadMetadata, ThreadStreamEvent, WidgetItem
+from chatkit.types import (
+    ClientEffectEvent,
+    ClientToolCallItem,
+    ThreadItemDoneEvent,
+    ThreadMetadata,
+    ThreadStreamEvent,
+    WidgetItem,
+)
 from chatkit.widgets import WidgetRoot
 from google.adk.agents.run_config import RunConfig
 from google.adk.tools.tool_context import ToolContext
@@ -108,3 +115,20 @@ async def issue_client_tool_call(
         raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
 
     await chatkit_run_config.context.issue_client_tool_call(client_tool_call, tool_context)
+
+
+async def stream_client_effect(
+    name: str,
+    data: dict[str, object],
+    tool_context: ToolContext,
+) -> None:
+    """Stream a client effect event to the chat interface.
+
+    Client effects are used to trigger client-side actions like updating UI state,
+    showing notifications, or playing animations.
+    """
+    event = ClientEffectEvent(
+        name=name,
+        data=data,
+    )
+    await stream_event(event, tool_context)

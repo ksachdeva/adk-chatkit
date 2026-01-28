@@ -1,6 +1,14 @@
 from .__about__ import __application__, __author__, __version__
 from ._client_tool_call import ClientToolCallState
-from ._context import ADKAgentContext, ADKContext, ChatkitRunConfig, issue_client_tool_call, stream_event, stream_widget
+from ._context import (
+    ADKAgentContext,
+    ADKContext,
+    ChatkitRunConfig,
+    issue_client_tool_call,
+    stream_client_effect,
+    stream_event,
+    stream_widget,
+)
 from ._response import stream_agent_response
 from ._server import ADKChatKitServer
 from ._store import ADKStore
@@ -21,4 +29,5 @@ __all__ = [
     "stream_widget",
     "stream_event",
     "ADKChatKitServer",
+    "stream_client_effect",
 ]

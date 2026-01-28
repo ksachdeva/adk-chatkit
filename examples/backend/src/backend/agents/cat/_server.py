@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import Any, cast
 from uuid import uuid4
 
-from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
+from adk_chatkit import ADKAgentContext, ADKChatKitServer, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 from chatkit.actions import Action
-from chatkit.server import ChatKitServer
 from chatkit.types import (
     AssistantMessageContent,
     AssistantMessageItem,
@@ -56,7 +55,7 @@ def _is_tool_completion_item(item: Any) -> bool:
     return isinstance(item, ClientToolCallItem)
 
 
-class CatChatKitServer(ChatKitServer[ADKContext]):
+class CatChatKitServer(ADKChatKitServer):
     def __init__(
         self,
         store: ADKStore,
@@ -139,78 +138,77 @@ class CatChatKitServer(ChatKitServer[ADKContext]):
             yield ThreadItemDoneEvent(item=message_item)
             return
 
-        # Save the name in the cat store and update the thread title
+        # update the thread title
         cat_context.rename(name)
-
-        # Update session state via append_event
-        state_delta: dict[str, object] = {"context": cast(object, cat_context.model_dump())}
-        system_event = Event(
-            invocation_id=str(uuid4().hex),
-            author="system",
-            actions=EventActions(state_delta=state_delta),
-            timestamp=datetime.now().timestamp(),
-        )
-        await self._session_service.append_event(session, system_event)
 
         title = f"{cat_context.name}'s Lounge"
         thread.title = title
         await self._store.save_thread(thread, context)
 
-        # Also yield a visible message to the user
-        message_item = AssistantMessageItem(
-            id=uuid4().hex,
-            thread_id=thread.id,
-            created_at=datetime.now(),
-            content=[
-                AssistantMessageContent(
-                    text=f"Love that choice. {cat_context.name}'s profile card is now ready. Would you like to check it out?"
-                )
-            ],
-        )
-        yield ThreadItemDoneEvent(item=message_item)
+        message_text = f"[HIDDEN]\nUser selected cat name: {name}"
 
-    async def make_hidden_content(
+        async for event in self._run_agent_with_message(message_text, thread, context):
+            yield event
+
+    async def _run_agent_with_message(
         self,
         message_text: str,
-        hidden_context_text: str | None = None,
-    ) -> genai_types.Content:
-        # If hidden_context_text is provided, include it in the message
-        # This hidden context is sent to the agent but NOT stored in the conversation store
-        if hidden_context_text:
-            message_text = f"[HIDDEN {hidden_context_text}]\n\n{message_text}"
+        thread: ThreadMetadata,
+        context: ADKContext,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Run the agent with a message and stream the response."""
+        agent_context = ADKAgentContext(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            thread=thread,
+        )
 
-        return genai_types.Content(
+        content = genai_types.Content(
             role="user",
             parts=[genai_types.Part.from_text(text=message_text)],
         )
 
-    async def respond(
+        event_stream = self._runner.run_async(
+            user_id=context.user_id,
+            session_id=thread.id,
+            new_message=content,
+            run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
+        )
+
+        async for event in stream_agent_response(agent_context, event_stream):
+            yield event
+
+    async def _adk_respond(
         self,
         thread: ThreadMetadata,
-        input_user_message: UserMessageItem | None,
+        item: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        if input_user_message is None:
+        if item is None:
             return
 
-        if _is_tool_completion_item(input_user_message):
+        if _is_tool_completion_item(item):
             return
 
-        message_text = _user_message_text(input_user_message)
+        message_text = _user_message_text(item)
         if not message_text:
             return
+
+        content = genai_types.Content(
+            role="user",
+            parts=[genai_types.Part.from_text(text=message_text)],
+        )
 
         agent_context = ADKAgentContext(
             app_name=context.app_name,
             user_id=context.user_id,
             thread=thread,
         )
-        agent_context.set_store(self._store)
 
         event_stream = self._runner.run_async(
             user_id=context.user_id,
             session_id=thread.id,
-            new_message=await self.make_hidden_content(message_text),
+            new_message=content,
             run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
         )
 

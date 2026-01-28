@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Optional
 from uuid import uuid4
 
-from adk_chatkit import ChatkitRunConfig, add_hidden_context, stream_client_effect, stream_event, stream_widget
+from adk_chatkit import ChatkitRunConfig, stream_client_effect, stream_event, stream_widget
 from chatkit.types import AssistantMessageContent, AssistantMessageItem, ThreadItemDoneEvent
 from google.adk.tools.tool_context import ToolContext
 from pydantic import ValidationError
@@ -49,9 +49,6 @@ async def feed_cat(
     tool_context.state["context"] = context.model_dump()
     flash = f"Fed {context.name} {meal}" if meal else f"{context.name} enjoyed a snack"
 
-    # Add hidden context so agent knows the action was performed
-    await add_hidden_context(f"<FED_CAT>{flash}</FED_CAT>", tool_context)
-
     # Stream update_cat_status event to update frontend UI
     run_config = tool_context._invocation_context.run_config
     if isinstance(run_config, ChatkitRunConfig):
@@ -86,9 +83,6 @@ async def play_with_cat(
     tool_context.state["context"] = context.model_dump()
     flash = activity or "Playtime"
 
-    # Add hidden context so agent knows the action was performed
-    await add_hidden_context(f"<PLAYED_WITH_CAT>{flash}</PLAYED_WITH_CAT>", tool_context)
-
     # Stream update_cat_status event to update frontend UI
     run_config = tool_context._invocation_context.run_config
     if isinstance(run_config, ChatkitRunConfig):
@@ -122,9 +116,6 @@ async def clean_cat(
     context.clean()
     tool_context.state["context"] = context.model_dump()
     flash = method or "Bath time"
-
-    # Add hidden context so agent knows the action was performed
-    await add_hidden_context(f"<CLEANED_CAT>{context.name} is fresh: {flash}</CLEANED_CAT>", tool_context)
 
     # Stream update_cat_status event to update frontend UI
     run_config = tool_context._invocation_context.run_config
@@ -177,9 +168,6 @@ async def set_cat_name(
 
     context.rename(cleaned)
     tool_context.state["context"] = context.model_dump()
-
-    # Add hidden context so agent knows the name was set
-    await add_hidden_context(f"<CAT_NAME_SELECTED>{context.name}</CAT_NAME_SELECTED>", tool_context)
 
     # Stream update_cat_status event to update frontend UI
     run_config = tool_context._invocation_context.run_config
