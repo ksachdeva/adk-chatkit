@@ -9,6 +9,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from ._config import Settings
 from ._runner_manager import RunnerManager
+from .api.cat import router as cat_router
 from .api.facts import router as facts_router
 from .api.health import router as health_router
 from .api.knowledge import router as knowledge_router
@@ -57,3 +58,4 @@ class App(fastapi.FastAPI):
         self.include_router(facts_router, prefix="/facts", tags=["facts"])
         self.include_router(knowledge_router, prefix="/knowledge", tags=["knowledge"])
         self.include_router(widgets_router, prefix="/widgets", tags=["widgets"])
+        self.include_router(cat_router, prefix="/cat", tags=["cat"])

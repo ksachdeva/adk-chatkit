@@ -7,6 +7,7 @@ import App from "./App";
 import FactPage from "./pages/Fact";
 import KnowledgeAssistantPage from "./pages/KnowledgeAssistant";
 import WidgetGallery from "./pages/Widgets";
+import CatLoungePage from "./pages/CatLounge";
 
 if (!container) {
   throw new Error("Root element with id 'root' not found");
@@ -20,6 +21,7 @@ createRoot(container).render(
       <Route path="/guide" element={<FactPage />} />
       <Route path="/federal" element={<KnowledgeAssistantPage />} />
       <Route path="/widget-gallery" element={<WidgetGallery />} />
+      <Route path="/cozy-cat" element={<CatLoungePage />} />
     </Routes>
   </BrowserRouter>
 );
