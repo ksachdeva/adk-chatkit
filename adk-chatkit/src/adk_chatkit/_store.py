@@ -8,6 +8,7 @@ from chatkit.types import (
     AssistantMessageItem,
     Attachment,
     ClientToolCallItem,
+    HiddenContextItem,
     InferenceOptions,
     Page,
     ThreadItem,
@@ -22,7 +23,12 @@ from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
 from ._client_tool_call import serialize_client_tool_call_item
-from ._constants import CHATKIT_CLIENT_TOOL_CALLS_KEY, CHATKIT_THREAD_METADTA_KEY, CHATKIT_WIDGET_STATE_KEY
+from ._constants import (
+    CHATKIT_CLIENT_TOOL_CALLS_KEY,
+    CHATKIT_HIDDEN_CONTEXT_KEY,
+    CHATKIT_THREAD_METADTA_KEY,
+    CHATKIT_WIDGET_STATE_KEY,
+)
 from ._context import ADKContext
 from ._thread_utils import (
     get_thread_metadata_from_state,
@@ -96,7 +102,7 @@ class ADKStore(Store[ADKContext]):
                 state={CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
             )
         else:
-            state_delta = {
+            state_delta: dict[str, object] = {
                 CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread),
             }
             actions_with_update = EventActions(state_delta=state_delta)
@@ -131,6 +137,18 @@ class ADKStore(Store[ADKContext]):
             )
 
         thread_items: list[ThreadItem] = []
+
+        # Load hidden context items from state
+        hidden_context_state = session.state.get(CHATKIT_HIDDEN_CONTEXT_KEY, {})
+        for item_id, hidden_context_data in hidden_context_state.items():
+            hidden_item = HiddenContextItem(
+                id=hidden_context_data.get("id", item_id),
+                thread_id=hidden_context_data.get("thread_id", thread_id),
+                created_at=hidden_context_data.get("created_at"),
+                content=hidden_context_data.get("content", ""),
+            )
+            thread_items.append(hidden_item)
+
         for event in session.events:
             an_item: ThreadItem | None = None
             if event.author == "user":
@@ -205,6 +223,7 @@ class ADKStore(Store[ADKContext]):
                     f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
                 )
 
+            state_delta: dict[str, object] = {}
             if isinstance(item, ClientToolCallItem):
                 state_delta = {
                     CHATKIT_CLIENT_TOOL_CALLS_KEY: {item.id: serialize_client_tool_call_item(item)},
@@ -212,6 +231,18 @@ class ADKStore(Store[ADKContext]):
             elif isinstance(item, WidgetItem):
                 state_delta = {
                     CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
+                }
+            elif isinstance(item, HiddenContextItem):
+                existing_hidden_context = session.state.get(CHATKIT_HIDDEN_CONTEXT_KEY, {})
+                hidden_context_data = {
+                    "id": item.id,
+                    "thread_id": item.thread_id,
+                    "created_at": item.created_at.isoformat(),
+                    "content": item.content,
+                }
+                existing_hidden_context[item.id] = hidden_context_data
+                state_delta = {
+                    CHATKIT_HIDDEN_CONTEXT_KEY: existing_hidden_context,
                 }
 
             actions_with_update = EventActions(state_delta=state_delta)
@@ -225,7 +256,7 @@ class ADKStore(Store[ADKContext]):
             await self._session_service.append_event(session, system_event)
 
     async def add_thread_item(self, thread_id: str, item: ThreadItem, context: ADKContext) -> None:
-        if not isinstance(item, (ClientToolCallItem, WidgetItem)):
+        if not isinstance(item, (ClientToolCallItem, WidgetItem, HiddenContextItem)):
             return
 
         _LOGGER.info(f"Adding thread item to thread {thread_id} for user {context.user_id} in app {context.app_name}")
@@ -262,7 +293,7 @@ class ADKStore(Store[ADKContext]):
         _LOGGER.info(
             f"Saving thread item {item.id} in thread {thread_id} for user {context.user_id} in app {context.app_name}"
         )
-        if not isinstance(item, (ClientToolCallItem, WidgetItem)):
+        if not isinstance(item, (ClientToolCallItem, WidgetItem, HiddenContextItem)):
             return
 
         self._pending_items.setdefault(thread_id, []).append(item)
@@ -271,6 +302,14 @@ class ADKStore(Store[ADKContext]):
         _LOGGER.info(
             f"Loading thread item {item_id} from thread {thread_id} for user {context.user_id} in app {context.app_name}"
         )
+
+        # Check pending items first (items that haven't been persisted yet)
+        pending_items = self._pending_items.get(thread_id, [])
+        for item in pending_items:
+            if item.id == item_id:
+                _LOGGER.info(f"Found item {item_id} in pending items for thread {thread_id}")
+                return item
+
         session = await self._session_service.get_session(
             app_name=context.app_name,
             user_id=context.user_id,
@@ -282,12 +321,31 @@ class ADKStore(Store[ADKContext]):
                 f"Session with id {thread_id} not found for user {context.user_id} in app {context.app_name}"
             )
 
-        # get the widget from the state
+        # Check for widget item in state
         widget_state = session.state.get(CHATKIT_WIDGET_STATE_KEY, {})
         if item_id in widget_state:
             widget_data = widget_state[item_id]
             widget_item = WidgetItem.model_validate(widget_data)
             return widget_item
+
+        # Check for client tool call item in state
+        client_tool_state = session.state.get(CHATKIT_CLIENT_TOOL_CALLS_KEY, {})
+        if item_id in client_tool_state:
+            client_tool_data = client_tool_state[item_id]
+            client_tool_item = ClientToolCallItem.model_validate(client_tool_data)
+            return client_tool_item
+
+        # Check for hidden context item in state
+        hidden_context_state = session.state.get(CHATKIT_HIDDEN_CONTEXT_KEY, {})
+        if item_id in hidden_context_state:
+            hidden_context_data = hidden_context_state[item_id]
+            hidden_item = HiddenContextItem(
+                id=hidden_context_data.get("id", item_id),
+                thread_id=hidden_context_data.get("thread_id", thread_id),
+                created_at=hidden_context_data.get("created_at"),
+                content=hidden_context_data.get("content", ""),
+            )
+            return hidden_item
 
         raise ValueError(f"Item with id {item_id} not found in thread {thread_id}")
 

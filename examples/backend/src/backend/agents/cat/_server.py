@@ -5,9 +5,8 @@ from datetime import datetime
 from typing import Any, cast
 from uuid import uuid4
 
-from adk_chatkit import ADKAgentContext, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
+from adk_chatkit import ADKAgentContext, ADKChatKitServer, ADKContext, ADKStore, ChatkitRunConfig, stream_agent_response
 from chatkit.actions import Action
-from chatkit.server import ChatKitServer
 from chatkit.types import (
     AssistantMessageContent,
     AssistantMessageItem,
@@ -56,7 +55,7 @@ def _is_tool_completion_item(item: Any) -> bool:
     return isinstance(item, ClientToolCallItem)
 
 
-class CatChatKitServer(ChatKitServer[ADKContext]):
+class CatChatKitServer(ADKChatKitServer):
     def __init__(
         self,
         store: ADKStore,
@@ -184,19 +183,19 @@ class CatChatKitServer(ChatKitServer[ADKContext]):
             parts=[genai_types.Part.from_text(text=message_text)],
         )
 
-    async def respond(
+    async def _adk_respond(
         self,
         thread: ThreadMetadata,
-        input_user_message: UserMessageItem | None,
+        item: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        if input_user_message is None:
+        if item is None:
             return
 
-        if _is_tool_completion_item(input_user_message):
+        if _is_tool_completion_item(item):
             return
 
-        message_text = _user_message_text(input_user_message)
+        message_text = _user_message_text(item)
         if not message_text:
             return
 
