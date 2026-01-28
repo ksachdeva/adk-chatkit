@@ -15,6 +15,9 @@ export default function App() {
           <li>
             <a href="/widget-gallery">Widget Gallery</a>
           </li>
+          <li>
+            <a href="/cozy-cat">Cat Lounge</a>
+          </li>
         </ul>
       </nav>
     </div>
