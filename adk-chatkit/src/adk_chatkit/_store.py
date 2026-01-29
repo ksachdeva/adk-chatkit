@@ -134,11 +134,15 @@ class ADKStore(Store[ADKContext]):
         for event in session.events:
             an_item: ThreadItem | None = None
             if event.author == "user":
+                message = _to_user_message_content(event)
+                if message[0].text.startswith("[HIDDEN]"):
+                    continue
+
                 an_item = UserMessageItem(
                     id=event.id,
                     thread_id=thread_id,
                     created_at=datetime.fromtimestamp(event.timestamp),
-                    content=_to_user_message_content(event),
+                    content=message,
                     attachments=[],
                     inference_options=InferenceOptions(),
                 )
