@@ -1,0 +1,84 @@
+/* Tag styling system */
+.tag {
+  @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium;
+}
+
+.tag-sm {
+  @apply px-2 py-0.5 text-[10px];
+}
+
+/* Tag color variants */
+.tag-breaking {
+  @apply bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200;
+}
+
+.tag-trending {
+  @apply bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-200;
+}
+
+.tag-featured {
+  @apply bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200;
+}
+
+.tag-local {
+  @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-200;
+}
+
+.tag-government,
+.tag-city-council {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-200;
+}
+
+.tag-community {
+  @apply bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-200;
+}
+
+.tag-development,
+.tag-housing {
+  @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200;
+}
+
+.tag-infrastructure,
+.tag-transportation {
+  @apply bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-200;
+}
+
+.tag-education {
+  @apply bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-200;
+}
+
+.tag-public-safety,
+.tag-emergency {
+  @apply bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-200;
+}
+
+.tag-environment {
+  @apply bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200;
+}
+
+.tag-business,
+.tag-economy {
+  @apply bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-200;
+}
+
+.tag-culture,
+.tag-arts {
+  @apply bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-200;
+}
+
+.tag-sports {
+  @apply bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200;
+}
+
+.tag-opinion {
+  @apply bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/30 dark:text-fuchsia-200;
+}
+
+.tag-investigation {
+  @apply bg-red-200 text-red-900 dark:bg-red-800/40 dark:text-red-100;
+}
+
+/* Default tag style for unmatched tags */
+.tag:not([class*="tag-"]):not(.tag-sm) {
+  @apply bg-neutral-100 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-200;
+}
