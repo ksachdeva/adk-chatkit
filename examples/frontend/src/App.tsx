@@ -18,6 +18,9 @@ export default function App() {
           <li>
             <a href="/cozy-cat">Cat Lounge</a>
           </li>
+          <li>
+            <a href="/news-guide">News Guide</a>
+          </li>
         </ul>
       </nav>
     </div>
