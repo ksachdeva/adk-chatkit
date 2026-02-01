@@ -69,6 +69,34 @@ class CatChatKitServer(ADKChatKitServer):
         self._session_service = session_service
         self._runner = runner_manager.add_runner(settings.CAT_APP_NAME, agent)
 
+    async def _run_agent_with_message(
+        self,
+        thread: ThreadMetadata,
+        message: str,
+        context: ADKContext,
+    ) -> AsyncIterator[ThreadStreamEvent]:
+        """Helper method to run the agent with a message string."""
+        agent_context = ADKAgentContext(
+            app_name=context.app_name,
+            user_id=context.user_id,
+            thread=thread,
+        )
+
+        content = genai_types.Content(
+            role="user",
+            parts=[genai_types.Part.from_text(text=message)],
+        )
+
+        event_stream = self._runner.run_async(
+            user_id=context.user_id,
+            session_id=thread.id,
+            new_message=content,
+            run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
+        )
+
+        async for event in stream_agent_response(agent_context, event_stream):
+            yield event
+
     async def action(
         self,
         thread: ThreadMetadata,
@@ -118,6 +146,7 @@ class CatChatKitServer(ADKChatKitServer):
         is_already_named = cat_context.name != "Unnamed Cat"
         selection = cat_context.name if is_already_named else name
 
+        # Update the widget to show selection
         options_data = payload.get("options", [])
         options = [CatNameSuggestion(**opt) for opt in options_data]
         widget = build_name_suggestions_widget(options, selected=selection)
@@ -126,6 +155,7 @@ class CatChatKitServer(ADKChatKitServer):
             item=sender.model_copy(update={"widget": widget}),
         )
 
+        # Handle edge case: cat already named
         if is_already_named:
             message_item = AssistantMessageItem(
                 id=uuid4().hex,
@@ -138,34 +168,15 @@ class CatChatKitServer(ADKChatKitServer):
             yield ThreadItemDoneEvent(item=message_item)
             return
 
-        # update the thread title
+        # Update the thread title immediately
         cat_context.rename(name)
-
         title = f"{cat_context.name}'s Lounge"
         thread.title = title
         await self._store.save_thread(thread, context)
 
+        # Create hidden message and run agent
         message_text = f"[HIDDEN]\nUser selected cat name: {name}"
-
-        agent_context = ADKAgentContext(
-            app_name=context.app_name,
-            user_id=context.user_id,
-            thread=thread,
-        )
-
-        content = genai_types.Content(
-            role="user",
-            parts=[genai_types.Part.from_text(text=message_text)],
-        )
-
-        event_stream = self._runner.run_async(
-            user_id=context.user_id,
-            session_id=thread.id,
-            new_message=content,
-            run_config=ChatkitRunConfig(streaming_mode=StreamingMode.SSE, context=agent_context),
-        )
-
-        async for event in stream_agent_response(agent_context, event_stream):
+        async for event in self._run_agent_with_message(thread, message_text, context):
             yield event
 
     async def _adk_respond(

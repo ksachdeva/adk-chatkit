@@ -79,6 +79,7 @@ class Settings(BaseSettings):
     WIDGETS_APP_NAME: str = "widgets"
     CAT_APP_NAME: str = "cat"
     NEWS_APP_NAME: str = "news"
+    METRO_MAP_APP_NAME: str = "metro_map"
 
     DATA_DIR: Path
 
