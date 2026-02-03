@@ -12,6 +12,7 @@ from .agents.airline import AirlineSupportChatKitServer
 from .agents.cat import CatChatKitServer
 from .agents.facts import FactsChatKitServer
 from .agents.knowledge import KnowledgeAssistantChatKitServer, make_vector_store
+from .agents.metro import MetroMapChatKitServer
 from .agents.news import NewsChatKitServer
 from .agents.widgets import WidgetsChatKitServer
 
@@ -73,6 +74,10 @@ def get_providers() -> list[BaseProvider]:
     news_server_provider.from_context(Settings)
     news_server_provider.provide(NewsChatKitServer)
 
+    metro_map_server_provider = Provider(scope=Scope.APP)
+    metro_map_server_provider.from_context(Settings)
+    metro_map_server_provider.provide(MetroMapChatKitServer)
+
     return [
         runner_provider,
         SessionServiceProvider(),
@@ -84,4 +89,5 @@ def get_providers() -> list[BaseProvider]:
         widget_server_provider,
         cat_server_provider,
         news_server_provider,
+        metro_map_server_provider,
     ]

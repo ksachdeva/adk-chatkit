@@ -1,0 +1,115 @@
+/* Station node styles */
+.station-node {
+  transition: transform 0.2s ease;
+}
+
+.station-node:hover {
+  transform: scale(1.1);
+}
+
+.station-node--selected .station-dot {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Location select mode styles */
+.station-node--location-select {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+/* Location select arrow styles */
+.location-select-arrow {
+  animation: bounce 1s ease-in-out infinite;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.location-select-arrow:hover {
+  animation: none;
+  transform: scale(1.15);
+}
+
+/* React Flow overrides */
+.react-flow__pane.cursor-crosshair {
+  cursor: crosshair;
+}
+
+.react-flow__node {
+  cursor: pointer;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Station label styling */
+.station-label {
+  font-size: 11px;
+  line-height: 1.2;
+  max-width: 100px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selection feedback */
+.station-node--selected .station-label {
+  font-weight: 600;
+}
+
+/* Dark mode adjustments */
+.dark .station-dot {
+  border-color: #1f2937;
+}
+
+.dark .station-label {
+  background-color: rgba(31, 41, 55, 0.9);
+  color: #f3f4f6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .station-label {
+    font-size: 10px;
+    max-width: 80px;
+  }
+
+  .station-dot {
+    width: 12px;
+    height: 12px;
+  }
+}
+
+/* Focus states for accessibility */
+.station-node:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Transition for color scheme changes */
+.station-node,
+.station-dot,
+.station-label {
+  transition: background-color 0.3s ease,
+              color 0.3s ease,
+              border-color 0.3s ease;
+}
