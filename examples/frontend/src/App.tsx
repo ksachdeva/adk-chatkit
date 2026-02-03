@@ -21,6 +21,9 @@ export default function App() {
           <li>
             <a href="/news-guide">News Guide</a>
           </li>
+          <li>
+            <a href="/metro-map">Metro Map</a>
+          </li>
         </ul>
       </nav>
     </div>

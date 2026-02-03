@@ -9,6 +9,7 @@ import KnowledgeAssistantPage from "./pages/KnowledgeAssistant";
 import WidgetGallery from "./pages/Widgets";
 import CatLoungePage from "./pages/CatLounge";
 import NewsGuidePage from "./pages/NewsGuide";
+import MetroMapPage from "./pages/MetroMap";
 
 if (!container) {
   throw new Error("Root element with id 'root' not found");
@@ -25,6 +26,7 @@ createRoot(container).render(
       <Route path="/cozy-cat" element={<CatLoungePage />} />
       <Route path="/news-guide" element={<NewsGuidePage />} />
       <Route path="/news-guide/:articleId" element={<NewsGuidePage />} />
+      <Route path="/metro-map" element={<MetroMapPage />} />
     </Routes>
   </BrowserRouter>
 );

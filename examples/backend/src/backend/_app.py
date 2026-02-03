@@ -13,6 +13,7 @@ from .api.cat import router as cat_router
 from .api.facts import router as facts_router
 from .api.health import router as health_router
 from .api.knowledge import router as knowledge_router
+from .api.metro_map import router as metro_map_router
 from .api.news import router as news_router
 from .api.support import router as support_router
 from .api.widgets import router as widgets_router
@@ -61,3 +62,4 @@ class App(fastapi.FastAPI):
         self.include_router(widgets_router, prefix="/widgets", tags=["widgets"])
         self.include_router(cat_router, prefix="/cat", tags=["cat"])
         self.include_router(news_router, prefix="/news", tags=["news"])
+        self.include_router(metro_map_router, prefix="/metro-map", tags=["metro-map"])
