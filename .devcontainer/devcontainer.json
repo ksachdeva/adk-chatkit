@@ -15,6 +15,8 @@
           "testing.pytestArgs": ["tests"],
           "defaultInterpreterPath": "./venv/bin/python"
         },
+        "python.terminal.activateEnvironment": false,
+        "python-envs.terminal.autoActivationType": "off",
         "files.exclude": {
           "**/.git": true,
           "**/.svn": true,
@@ -77,12 +79,12 @@
     // uv
     "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {},
     // docker-in-docker
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+    "ghcr.io/devcontainers/features/docker-in-docker:3.0.0": {
       "moby": false
     }
   },
   "mounts": [
     "source=devcontainer-zshhistory,target=/commandhistory,type=volume"
   ],
-  "postCreateCommand": "bash scripts/post-create.sh"
+  "postCreateCommand": ["bash", ".devcontainer/scripts/post-create.sh"]
 }

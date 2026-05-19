@@ -1,0 +1,39 @@
+{
+  "features": {
+    "ghcr.io/devcontainers-extra/features/ts-node:1": {
+      "version": "1.0.2",
+      "resolved": "ghcr.io/devcontainers-extra/features/ts-node@sha256:f5882fbf39d63424c151918e15a6cf3f3b302036256338718f414dfc488a0e6f",
+      "integrity": "sha256:f5882fbf39d63424c151918e15a6cf3f3b302036256338718f414dfc488a0e6f"
+    },
+    "ghcr.io/devcontainers-extra/features/typescript:2": {
+      "version": "2.0.16",
+      "resolved": "ghcr.io/devcontainers-extra/features/typescript@sha256:a6bb60b4e02edb858f22e18b691ac7223dd7dfb52708e84d887488e326bd48f5",
+      "integrity": "sha256:a6bb60b4e02edb858f22e18b691ac7223dd7dfb52708e84d887488e326bd48f5"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "version": "2.5.8",
+      "resolved": "ghcr.io/devcontainers/features/common-utils@sha256:c42fdefe6d737a3a6f61cc52b23c7c9a565d08cc4d9c303669a7cf2ee5fd81fc",
+      "integrity": "sha256:c42fdefe6d737a3a6f61cc52b23c7c9a565d08cc4d9c303669a7cf2ee5fd81fc"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:3.0.0": {
+      "version": "3.0.0",
+      "resolved": "ghcr.io/devcontainers/features/docker-in-docker@sha256:256ffdbc156ffddd4c54b917176b5ddba379335706da7234e338bdd97bb4d771",
+      "integrity": "sha256:256ffdbc156ffddd4c54b917176b5ddba379335706da7234e338bdd97bb4d771"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "1.7.1",
+      "resolved": "ghcr.io/devcontainers/features/node@sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6",
+      "integrity": "sha256:8c0de46939b61958041700ee89e3493f3b2e4131a06dc46b4d9423427d06e5f6"
+    },
+    "ghcr.io/jsburckhardt/devcontainer-features/uv:1": {
+      "version": "1.0.0",
+      "resolved": "ghcr.io/jsburckhardt/devcontainer-features/uv@sha256:542a0bc2203205b3c696de650ba862f280b20af3543493cc232edd9ac35791f7",
+      "integrity": "sha256:542a0bc2203205b3c696de650ba862f280b20af3543493cc232edd9ac35791f7"
+    },
+    "ghcr.io/mikaello/devcontainer-features/modern-shell-utils:2.0.0": {
+      "version": "2.0.0",
+      "resolved": "ghcr.io/mikaello/devcontainer-features/modern-shell-utils@sha256:60b5be4e306b6b2cc6b266201c1011a0cde28778743b19d07101c9b5fe652163",
+      "integrity": "sha256:60b5be4e306b6b2cc6b266201c1011a0cde28778743b19d07101c9b5fe652163"
+    }
+  }
+}

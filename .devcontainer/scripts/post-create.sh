@@ -3,15 +3,19 @@
 USERNAME=vscode
 
 echo "changing zshrc theme to ys ..."
-sed -i s/^ZSH_THEME=".\+"$/ZSH_THEME=\"ys\"/g ~/.zshrc    
+sed -i s/^ZSH_THEME=".\+"$/ZSH_THEME=\"ys\"/g ~/.zshrc
 
 echo "sym link zsh_history ..."
-mkdir -p /commandhistory 
+mkdir -p /commandhistory
 sudo touch /commandhistory/.zsh_history
-sudo chown -R $USERNAME /commandhistory 
+sudo chown -R $USERNAME /commandhistory
 
 SNIPPET="export PROMPT_COMMAND='history -a' && export HISTFILE=/commandhistory/.zsh_history"
 echo "$SNIPPET" >> "/home/$USERNAME/.zshrc"
+
+echo "Adding zsh aliases..."
+echo "alias poe='uv run poe'" >> /home/${USER}/.zshrc
+
 
 echo 'eval "$(uv generate-shell-completion zsh)"' >> "/home/$USERNAME/.zshrc"
 echo 'eval "$(uvx --generate-shell-completion zsh)"' >> "/home/$USERNAME/.zshrc"
