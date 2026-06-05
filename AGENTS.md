@@ -21,8 +21,9 @@ Located in `adk-chatkit/src/adk_chatkit/`, the key public exports are:
 | `ADKStore` | `_store.py` | Wraps ADK's `BaseSessionService` to implement chatkit's `Store` interface — handles threads, messages, widgets, and client tool calls |
 | `stream_agent_response` | `_response.py` | Translates ADK streaming events into chatkit `ThreadStreamEvent`s |
 | `ADKChatKitServer` | `_server.py` | Base server class for implementing chatkit-compatible agents |
-| `ADKContext` / `ADKAgentContext` | `_context.py` | Context objects carrying app/user/thread info through the pipeline |
+| `ADKContext` / `ADKAgentContext` | `_context.py` | Context objects carrying app/user/thread info through the pipeline. `ADKAgentContext.client_tool_call` holds the single client tool call issued in one agent turn (chatkit supports at most one per turn) |
 | `ChatkitRunConfig` | `_context.py` | Run config for ADK with SSE streaming mode |
+| `stream_event` | `_context.py` | Low-level helper for emitting any `ThreadStreamEvent` from a tool |
 | `stream_widget` | `_context.py` | Helper for emitting rich widget UI items into the chat thread |
 | `issue_client_tool_call` | `_context.py` | Helper for triggering browser-side JavaScript tool executions |
 | `serialize_widget_item` | `_widgets.py` | Serialization utility for widget state |
@@ -150,4 +151,4 @@ uv run poe run-example-frontend
 ## 📌 Notes & TODOs
 
 - **Attachments/artifacts** are not yet supported (`save_attachment`, `load_attachment`, `delete_attachment` all raise `NotImplementedError`)
-- `delete_thread_item` is currently a no-op (silently ignored)
+- `delete_thread_item` is a no-op — ADK session events are append-only and individual events cannot be deleted
