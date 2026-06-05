@@ -4,7 +4,7 @@ from typing import Any
 from chatkit.types import ThreadMetadata
 from google.adk.sessions.state import State
 
-from ._constants import CHATKIT_THREAD_METADTA_KEY
+from ._constants import CHATKIT_THREAD_METADATA_KEY
 
 
 def serialize_thread_metadata(thread: ThreadMetadata) -> dict[str, Any]:
@@ -13,5 +13,16 @@ def serialize_thread_metadata(thread: ThreadMetadata) -> dict[str, Any]:
 
 
 def get_thread_metadata_from_state(state: State | dict[str, Any]) -> ThreadMetadata:
-    thread_metadata_dict = state[CHATKIT_THREAD_METADTA_KEY]
+    """Deserialize ThreadMetadata from ADK session state.
+
+    Raises:
+        KeyError: If the session state does not contain chatkit metadata. This
+            typically means the session was created outside of adk-chatkit.
+    """
+    thread_metadata_dict = state.get(CHATKIT_THREAD_METADATA_KEY)
+    if thread_metadata_dict is None:
+        raise KeyError(
+            f"Session state is missing the '{CHATKIT_THREAD_METADATA_KEY}' key. "
+            "This session may not have been created by adk-chatkit."
+        )
     return ThreadMetadata.model_validate(thread_metadata_dict)

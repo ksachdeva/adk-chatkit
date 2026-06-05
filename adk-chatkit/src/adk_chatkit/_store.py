@@ -22,7 +22,7 @@ from google.adk.sessions import BaseSessionService
 from google.adk.sessions.base_session_service import ListSessionsResponse
 
 from ._client_tool_call import serialize_client_tool_call_item
-from ._constants import CHATKIT_CLIENT_TOOL_CALLS_KEY, CHATKIT_THREAD_METADTA_KEY, CHATKIT_WIDGET_STATE_KEY
+from ._constants import CHATKIT_CLIENT_TOOL_CALLS_KEY, CHATKIT_THREAD_METADATA_KEY, CHATKIT_WIDGET_STATE_KEY
 from ._context import ADKContext
 from ._thread_utils import (
     get_thread_metadata_from_state,
@@ -93,11 +93,11 @@ class ADKStore(Store[ADKContext]):
                 app_name=context.app_name,
                 user_id=context.user_id,
                 session_id=thread.id,
-                state={CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread)},
+                state={CHATKIT_THREAD_METADATA_KEY: serialize_thread_metadata(thread)},
             )
         else:
             state_delta = {
-                CHATKIT_THREAD_METADTA_KEY: serialize_thread_metadata(thread),
+                CHATKIT_THREAD_METADATA_KEY: serialize_thread_metadata(thread),
             }
             actions_with_update = EventActions(state_delta=state_delta)
             system_event = Event(
