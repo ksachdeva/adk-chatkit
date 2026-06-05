@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from chatkit.widgets import Card, WidgetRoot
+from chatkit.widgets import WidgetRoot, WidgetTemplate
 
 from .._state import CatAgentContext
+
+cat_profile_widget_template = WidgetTemplate.from_file("cat_profile.widget")
 
 
 def _format_age_label(age: int) -> str:
@@ -38,118 +40,15 @@ def _image_src(state: CatAgentContext) -> str:
 
 
 def build_profile_card_widget(state: CatAgentContext, favorite_toy: str | None = None) -> WidgetRoot:
-    """Build the cat profile card widget."""
-    widget_data = {
-        "type": "Card",
-        "size": "sm",
-        "padding": 0,
-        "children": [
-            {
-                "type": "Box",
-                "padding": {"x": 4, "y": 2},
-                "background": {"light": "yellow-50", "dark": "yellow-900"},
-                "children": [
-                    {
-                        "type": "Row",
-                        "align": "center",
-                        "children": [
-                            {
-                                "type": "Title",
-                                "value": "C A L I F O R N I A",
-                                "size": "sm",
-                                "weight": "bold",
-                                "color": {"light": "orange-700", "dark": "orange-100"},
-                            },
-                            {"type": "Spacer"},
-                            {
-                                "type": "Badge",
-                                "label": "meowing license",
-                                "color": "warning",
-                                "variant": "soft",
-                            },
-                        ],
-                    }
-                ],
-            },
-            {
-                "type": "Row",
-                "padding": {"x": 5, "top": 2, "bottom": 4},
-                "gap": 4,
-                "align": "start",
-                "children": [
-                    {
-                        "type": "Box",
-                        "background": "linear-gradient(135deg, #fff6d9 0%, #ceb0fb 100%)",
-                        "radius": "3xl",
-                        "align": "center",
-                        "justify": "center",
-                        "children": [
-                            {
-                                "type": "Image",
-                                "src": _image_src(state),
-                                "width": 90,
-                                "height": 110,
-                                "position": "top",
-                                "radius": "3xl",
-                            }
-                        ],
-                    },
-                    {
-                        "type": "Col",
-                        "gap": 2,
-                        "flex": "auto",
-                        "children": [
-                            {
-                                "type": "Title",
-                                "value": state.name,
-                                "size": "md",
-                            },
-                            {
-                                "type": "Row",
-                                "children": [
-                                    {"type": "Caption", "value": "Age"},
-                                    {"type": "Spacer"},
-                                    {
-                                        "type": "Text",
-                                        "value": _format_age_label(state.age),
-                                        "size": "sm",
-                                        "textAlign": "end",
-                                    },
-                                ],
-                            },
-                            {
-                                "type": "Row",
-                                "children": [
-                                    {"type": "Caption", "value": "Color pattern"},
-                                    {"type": "Spacer"},
-                                    {
-                                        "type": "Text",
-                                        "value": _format_color_pattern_label(state.color_pattern),
-                                        "size": "sm",
-                                        "textAlign": "end",
-                                    },
-                                ],
-                            },
-                            {
-                                "type": "Row",
-                                "children": [
-                                    {"type": "Caption", "value": "Toy choice"},
-                                    {"type": "Spacer"},
-                                    {
-                                        "type": "Text",
-                                        "value": _format_favorite_toy(favorite_toy),
-                                        "size": "sm",
-                                        "textAlign": "end",
-                                    },
-                                ],
-                            },
-                        ],
-                    },
-                ],
-            },
-        ],
-    }
-    return Card.model_validate(widget_data)
+    return cat_profile_widget_template.build(
+        data={
+            "name": state.name,
+            "image_src": _image_src(state),
+            "age": _format_age_label(state.age),
+            "color_pattern": _format_color_pattern_label(state.color_pattern),
+            "favorite_toy": _format_favorite_toy(favorite_toy),
+        }
+    )
 
 
 def profile_widget_copy_text(state: CatAgentContext) -> str:
