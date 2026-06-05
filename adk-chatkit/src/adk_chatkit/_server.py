@@ -23,7 +23,7 @@ class ADKChatKitServer(ChatKitServer[ADKContext]):
     def _adk_respond(
         self,
         thread: ThreadMetadata,
-        item: UserMessageItem | None,
+        input_user_message: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
         raise NotImplementedError("This method should be implemented by subclasses of ADKChatKitServer")
@@ -31,10 +31,10 @@ class ADKChatKitServer(ChatKitServer[ADKContext]):
     async def respond(
         self,
         thread: ThreadMetadata,
-        item: UserMessageItem | None,
+        input_user_message: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        async for event in self._adk_respond(thread, item, context):
+        async for event in self._adk_respond(thread, input_user_message, context):
             yield event
 
         # update session service for any pending items here

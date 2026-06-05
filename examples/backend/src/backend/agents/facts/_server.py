@@ -28,17 +28,17 @@ def _make_facts_agent(settings: Settings) -> FactsAgent:
     )
 
 
-def _user_message_text(item: UserMessageItem) -> str:
+def _user_message_text(input_user_message: UserMessageItem) -> str:
     parts: list[str] = []
-    for part in item.content:
+    for part in input_user_message.content:
         text = getattr(part, "text", None)
         if text:
             parts.append(text)
     return " ".join(parts).strip()
 
 
-def _is_tool_completion_item(item: Any) -> bool:
-    return isinstance(item, ClientToolCallItem)
+def _is_tool_completion_item(input_user_message: Any) -> bool:
+    return isinstance(input_user_message, ClientToolCallItem)
 
 
 class FactsChatKitServer(ADKChatKitServer):
@@ -55,16 +55,16 @@ class FactsChatKitServer(ADKChatKitServer):
     async def _adk_respond(
         self,
         thread: ThreadMetadata,
-        item: UserMessageItem | None,
+        input_user_message: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        if item is None:
+        if input_user_message is None:
             return
 
-        if _is_tool_completion_item(item):
+        if _is_tool_completion_item(input_user_message):
             return
 
-        message_text = _user_message_text(item)
+        message_text = _user_message_text(input_user_message)
         if not message_text:
             return
 

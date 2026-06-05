@@ -62,16 +62,16 @@ class WidgetsChatKitServer(ADKChatKitServer):
     async def _adk_respond(
         self,
         thread: ThreadMetadata,
-        item: UserMessageItem | None,
+        input_user_message: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        if item is None:
+        if input_user_message is None:
             return
 
-        if _is_tool_completion_item(item):
+        if _is_tool_completion_item(input_user_message):
             return
 
-        message_text = _user_message_text(item)
+        message_text = _user_message_text(input_user_message)
         if not message_text:
             return
 

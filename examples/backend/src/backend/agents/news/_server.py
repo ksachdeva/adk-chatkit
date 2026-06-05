@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
@@ -229,13 +228,13 @@ class NewsChatKitServer(ADKChatKitServer):
     async def _adk_respond(
         self,
         thread: ThreadMetadata,
-        item: UserMessageItem | None,
+        input_user_message: UserMessageItem | None,
         context: ADKContext,
     ) -> AsyncIterator[ThreadStreamEvent]:
-        if item is None:
+        if input_user_message is None:
             return
 
-        message_text = _user_message_text(item)
+        message_text = _user_message_text(input_user_message)
         if not message_text:
             return
 
@@ -244,7 +243,7 @@ class NewsChatKitServer(ADKChatKitServer):
             await self._maybe_update_thread_title(thread, message_text, context)
 
         # Select which agent to use
-        runner, runner_app_name = self._select_runner(item)
+        runner, runner_app_name = self._select_runner(input_user_message)
 
         # Extract article_id from context if available
         article_id = getattr(context, "article_id", None)
@@ -285,24 +284,24 @@ class NewsChatKitServer(ADKChatKitServer):
         except Exception as exc:
             print(f"[ERROR] Failed to update thread title: {exc}")
 
-    def _select_runner(self, item: UserMessageItem | None) -> tuple[Any, str]:
+    def _select_runner(self, input_user_message: UserMessageItem | None) -> tuple[Any, str]:
         """Select which agent runner to use based on tool choice.
 
         Returns:
             tuple[Runner, str]: The runner and its app_name for session management.
         """
-        tool_choice = self._resolve_tool_choice(item)
+        tool_choice = self._resolve_tool_choice(input_user_message)
         if tool_choice == "delegate_to_event_finder":
             return self._event_runner, self._event_runner_app_name
         if tool_choice == "delegate_to_puzzle_keeper":
             return self._puzzle_runner, self._puzzle_runner_app_name
         return self._news_runner, self._news_runner_app_name
 
-    def _resolve_tool_choice(self, item: UserMessageItem | None) -> str | None:
+    def _resolve_tool_choice(self, input_user_message: UserMessageItem | None) -> str | None:
         """Extract tool choice from user message inference options."""
-        if not item or not item.inference_options:
+        if not input_user_message or not input_user_message.inference_options:
             return None
-        tool_choice = item.inference_options.tool_choice
+        tool_choice = input_user_message.inference_options.tool_choice
         if tool_choice and isinstance(tool_choice.id, str):
             return tool_choice.id
         return None
