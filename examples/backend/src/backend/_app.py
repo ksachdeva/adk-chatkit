@@ -1,10 +1,8 @@
-import functools
 from contextlib import asynccontextmanager
-from typing import AsyncContextManager, AsyncGenerator, Callable, Self
+from typing import AsyncGenerator
 
 import fastapi
 from fastapi import FastAPI
-from google.adk.runners import Runner
 from starlette.middleware.cors import CORSMiddleware
 
 from ._config import Settings
@@ -30,20 +28,12 @@ async def internal_lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 class App(fastapi.FastAPI):
-    def __init__(
-        self,
-        settings: Settings,
-        lifespan: Callable[[Self], AsyncContextManager[None]] | None = None,
-    ):
-        self._runner_cache: dict[str, Runner] = {}
-
-        lifespan = functools.partial(internal_lifespan)
-
+    def __init__(self, settings: Settings) -> None:
         super().__init__(
             title=settings.PROJECT_NAME,
             docs_url="/docs" if settings.ENVIRONMENT in ["local", "staging"] else None,
             redoc_url=None,
-            lifespan=lifespan,
+            lifespan=internal_lifespan,
         )
 
         if settings.all_cors_origins:
