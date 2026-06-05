@@ -1,7 +1,7 @@
 {
   "name": "adk-chatkit",
   "dockerFile": "Dockerfile",
-  "runArgs": ["--env-file", ".devcontainer/devcontainer.env"],
+  "runArgs": [],
   "customizations": {
     "vscode": {
       "settings": {
