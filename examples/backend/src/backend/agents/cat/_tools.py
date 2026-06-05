@@ -13,6 +13,8 @@ from ._state import CatAgentContext
 from .widgets.name_suggestions_widget import CatNameSuggestion, build_name_suggestions_widget
 from .widgets.profile_card_widget import build_profile_card_widget
 
+_CAT_CONTEXT_KEY = "cat-context"
+
 
 async def _stream_client_effect(
     tool_context: ToolContext,
@@ -31,10 +33,10 @@ async def get_cat_status(tool_context: ToolContext) -> dict[str, Any]:
         A dictionary containing the cat's current state.
     """
     print("[TOOL CALL] get_cat_status")
-    context = tool_context.state.get("context", None)
+    context = tool_context.state.get(_CAT_CONTEXT_KEY, None)
     if context is None:
         cat_context = CatAgentContext.create_initial_context()
-        tool_context.state["context"] = cat_context.model_dump()
+        tool_context.state[_CAT_CONTEXT_KEY] = cat_context.model_dump()
         return cat_context.to_payload()
 
     cat_context = CatAgentContext.model_validate(context)
@@ -54,9 +56,9 @@ async def feed_cat(
         A dictionary with a message confirming the feed action.
     """
     print("[TOOL CALL] feed_cat")
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
     context.feed()
-    tool_context.state["context"] = context.model_dump()
+    tool_context.state[_CAT_CONTEXT_KEY] = context.model_dump()
     flash = f"Fed {context.name} {meal}" if meal else f"{context.name} enjoyed a snack"
 
     # Stream update_cat_status event to update frontend UI
@@ -88,9 +90,9 @@ async def play_with_cat(
         A dictionary with a message confirming the play action.
     """
     print("[TOOL CALL] play_with_cat")
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
     context.play()
-    tool_context.state["context"] = context.model_dump()
+    tool_context.state[_CAT_CONTEXT_KEY] = context.model_dump()
     flash = activity or "Playtime"
 
     # Stream update_cat_status event to update frontend UI
@@ -122,9 +124,9 @@ async def clean_cat(
         A dictionary with a message confirming the clean action.
     """
     print("[TOOL CALL] clean_cat")
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
     context.clean()
-    tool_context.state["context"] = context.model_dump()
+    tool_context.state[_CAT_CONTEXT_KEY] = context.model_dump()
     flash = method or "Bath time"
 
     # Stream update_cat_status event to update frontend UI
@@ -156,7 +158,7 @@ async def set_cat_name(
     """
     print(f'[TOOL CALL] set_cat_name("{name}")')
 
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
     if context.name != "Unnamed Cat":
         # Stream a message when cat already has a name
         run_config = tool_context._invocation_context.run_config
@@ -176,7 +178,7 @@ async def set_cat_name(
         raise ValueError("A name is required to name the cat.")
 
     context.rename(cleaned)
-    tool_context.state["context"] = context.model_dump()
+    tool_context.state[_CAT_CONTEXT_KEY] = context.model_dump()
 
     # Stream update_cat_status event to update frontend UI
     run_config = tool_context._invocation_context.run_config
@@ -210,9 +212,9 @@ async def show_cat_profile(
     """
     print("[TOOL CALL] show_cat_profile")
 
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
     context.set_age(age)
-    tool_context.state["context"] = context.model_dump()
+    tool_context.state[_CAT_CONTEXT_KEY] = context.model_dump()
 
     widget = build_profile_card_widget(context, favorite_toy)
     await stream_widget(widget, tool_context)
@@ -261,7 +263,7 @@ async def speak_as_cat(
         raise ValueError("A line is required for the cat to speak.")
 
     # Get current cat state to include in the effect
-    context = CatAgentContext.model_validate(tool_context.state["context"])
+    context = CatAgentContext.model_validate(tool_context.state[_CAT_CONTEXT_KEY])
 
     # Stream the client effect event to trigger the speech bubble
     await _stream_client_effect(
