@@ -1,4 +1,3 @@
-import json
 from typing import Any, Literal
 from uuid import uuid4
 
@@ -19,5 +18,4 @@ class ClientToolCallState(BaseModel):
 
 
 def serialize_client_tool_call_item(client_tool_call: ClientToolCallItem) -> dict[str, Any]:
-    json_dump = client_tool_call.model_dump_json(exclude_none=True)
-    return json.loads(json_dump)  # type: ignore
+    return client_tool_call.model_dump(mode="json", exclude_none=True)
