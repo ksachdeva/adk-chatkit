@@ -218,7 +218,7 @@ class ADKStore(Store[ADKContext]):
                     CHATKIT_WIDGET_STATE_KEY: {item.id: serialize_widget_item(item)},
                 }
 
-            actions_with_update = EventActions(state_delta=state_delta)
+            actions_with_update = EventActions(state_delta=state_delta)  # type: ignore
             system_event = Event(
                 invocation_id=uuid4().hex,
                 author="system",
