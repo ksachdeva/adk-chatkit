@@ -5,7 +5,7 @@ from chatkit.types import ClientToolCallItem, ThreadItemDoneEvent, ThreadMetadat
 from chatkit.widgets import WidgetRoot
 from google.adk.agents.run_config import RunConfig
 from google.adk.tools.tool_context import ToolContext
-from pydantic import BaseModel
+from pydantic import BaseModel, PrivateAttr
 
 from ._client_tool_call import ClientToolCallState
 from ._event_utils import QueueCompleteSentinel
@@ -18,9 +18,16 @@ class ADKContext(BaseModel):
 
 class ADKAgentContext(ADKContext):
     thread: ThreadMetadata
+
+    # The single client tool call issued during this agent turn, if any.
+    # Chatkit supports exactly one pending ClientToolCallItem per turn —
+    # the ThreadsAddClientToolOutputReq handler expects a single pending item.
     client_tool_call: ClientToolCallItem | None = None
 
-    _events: asyncio.Queue[ThreadStreamEvent | QueueCompleteSentinel] = asyncio.Queue()
+    # Per-instance queue for streaming events from tool implementations back to
+    # the response generator. Using PrivateAttr with default_factory ensures each
+    # instance gets its own queue rather than sharing a class-level singleton.
+    _events: asyncio.Queue[ThreadStreamEvent | QueueCompleteSentinel] = PrivateAttr(default_factory=asyncio.Queue)
 
     async def stream(self, event: ThreadStreamEvent) -> None:
         await self._events.put(event)
@@ -72,7 +79,7 @@ async def stream_event(event: ThreadStreamEvent, tool_context: ToolContext) -> N
         event: The event to stream.
         tool_context: The tool context associated with the event.
     """
-    chatkit_run_config = tool_context._invocation_context.run_config
+    chatkit_run_config = tool_context._invocation_context.run_config  # type: ignore[union-attr]
     if not isinstance(chatkit_run_config, ChatkitRunConfig):
         raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
 
@@ -86,7 +93,7 @@ async def stream_widget(widget: WidgetRoot, tool_context: ToolContext) -> None:
         widget: The widget to stream.
         tool_context: The tool context associated with the widget.
     """
-    chatkit_run_config = tool_context._invocation_context.run_config
+    chatkit_run_config = tool_context._invocation_context.run_config  # type: ignore[union-attr]
     if not isinstance(chatkit_run_config, ChatkitRunConfig):
         raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
 
@@ -103,7 +110,7 @@ async def issue_client_tool_call(
         client_tool_call: The client tool call state to issue.
         tool_context: The tool context associated with the client tool call.
     """
-    chatkit_run_config = tool_context._invocation_context.run_config
+    chatkit_run_config = tool_context._invocation_context.run_config  # type: ignore[union-attr]
     if not isinstance(chatkit_run_config, ChatkitRunConfig):
         raise ValueError("Make sure to set run_config for runner to ChatkitRunConfig")
 
