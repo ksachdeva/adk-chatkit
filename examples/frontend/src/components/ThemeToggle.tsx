@@ -1,13 +1,24 @@
 import clsx from "clsx";
 import { Moon, Sun } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import type { ColorScheme } from "../hooks/useColorScheme";
+
+type ThemeToggleProps = {
+  value?: ColorScheme;
+  onChange?: (scheme: ColorScheme) => void;
+};
 
 const buttonBase =
   "inline-flex h-9 w-9 items-center justify-center rounded-full text-[0.7rem] transition-colors duration-200";
 
-export function ThemeToggle() {
-  const scheme = useAppStore((state) => state.scheme);
-  const setScheme = useAppStore((state) => state.setScheme);
+export function ThemeToggle({ value, onChange }: ThemeToggleProps) {
+  const storeScheme = useAppStore((state) => state.scheme);
+  const storeSetScheme = useAppStore((state) => state.setScheme);
+
+  // Use props if provided, otherwise fall back to store
+  const scheme = value ?? storeScheme;
+  const setScheme = onChange ?? storeSetScheme;
+
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/60 p-1 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/60">
       <button

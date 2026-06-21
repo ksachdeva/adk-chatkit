@@ -24,16 +24,12 @@ async def chatkit_endpoint(
     request_server: FromDishka[AirlineSupportChatKitServer],
 ) -> Response:
     payload = await request.body()
-    print("Received payload:", payload)
-
     user_id = "ksachdeva-1"
 
     result = await request_server.process(
         payload,
         ADKContext(user_id=user_id, app_name=settings.AIRLINE_APP_NAME),
     )
-
-    print(result)
 
     if isinstance(result, StreamingResult):
         return StreamingResponse(result, media_type="text/event-stream")
@@ -53,13 +49,12 @@ async def customer_snapshot(
     settings: FromDishka[Settings],
     thread_id: str | None = Query(None, description="ChatKit thread identifier"),
 ) -> dict[str, Any]:
-    # hard coded user id for now
-    # as not doing an authentication
+    """Return customer profile for a given thread, or default if no thread."""
     user_id = "ksachdeva-1"
 
     if not thread_id:
-        context = AirlineAgentContext.create_initial_context().model_dump()
-        return {"customer": context["customer_profile"]}
+        initial_context = AirlineAgentContext.create_initial_context()
+        return {"customer": initial_context.customer_profile.to_dict()}
 
     session = await session_service.get_session(
         app_name=settings.AIRLINE_APP_NAME,
@@ -68,11 +63,14 @@ async def customer_snapshot(
     )
 
     if not session:
-        raise ValueError(f"Session with id {thread_id} not found")
+        initial_context = AirlineAgentContext.create_initial_context()
+        return {"customer": initial_context.customer_profile.to_dict()}
 
-    context: dict[str, Any] | None = session.state.get("context", None)
+    context_dict: dict[str, Any] | None = session.state.get("context", None)
 
-    if context is None:
-        raise ValueError(f"No context found in session {thread_id}")
+    if context_dict is None:
+        initial_context = AirlineAgentContext.create_initial_context()
+        return {"customer": initial_context.customer_profile.to_dict()}
 
-    return {"customer": context["customer_profile"]}
+    ctx = AirlineAgentContext.model_validate(context_dict)
+    return {"customer": ctx.customer_profile.to_dict()}

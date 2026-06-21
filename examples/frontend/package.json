@@ -14,7 +14,7 @@
     "npm": ">=9"
   },
   "dependencies": {
-    "@openai/chatkit-react": "^1.4.0",
+    "@openai/chatkit-react": "^1.4.3",
     "@xyflow/react": "^12.7.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
